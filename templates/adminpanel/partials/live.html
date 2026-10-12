@@ -1,0 +1,33 @@
+{% include 'adminpanel/partials/live_cards.html' %}
+{% if flash %}<div class="alert alert-{{ flash.0 }} py-2">{{ flash.1 }}</div>{% endif %}
+<div class="card">
+  <div class="card-header">Active sessions <span class="badge text-bg-secondary ms-1">{{ snap.active_users }}</span></div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light"><tr><th>Instructor</th><th>Username</th><th>IP</th><th>MAC</th><th>Uptime</th><th>Downloaded</th><th>Uploaded</th><th></th></tr></thead>
+      <tbody>
+      {% for r in snap.rows %}
+        <tr>
+          <td>{% if r.instructor_id %}<a href="{% url 'adminpanel:instructor_detail' r.instructor_id %}">{{ r.name }}</a>{% else %}<span class="text-muted">{{ r.name }}</span>{% endif %}</td>
+          <td class="mono">{{ r.user }}</td>
+          <td class="mono">{{ r.address }}</td>
+          <td class="mono">{{ r.mac }}</td>
+          <td>{{ r.uptime }}</td>
+          <td title="bytes-out (router to client)">{{ r.out_h }}</td>
+          <td title="bytes-in (client to router)">{{ r.in_h }}</td>
+          <td class="text-end">
+            {% if r.kickable %}
+            <form hx-post="{% url 'adminpanel:monitoring_kick' %}" hx-target="#live"hx-swap="innerHTML" hx-confirm="Disconnect {{ r.user }} from the network?">
+              <input type="hidden" name="active_id" value="{{ r.id }}"><input type="hidden" name="user" value="{{ r.user }}">
+              <button class="btn btn-sm btn-outline-danger">Kick</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">{% if snap.online %}No one is connected right now.{% else %}Router unreachable - cannot read active sessions.{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

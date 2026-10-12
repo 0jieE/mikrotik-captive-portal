@@ -1,0 +1,37 @@
+{% extends 'base_admin.html' %}
+{% block title %}Bandwidth policies{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 page-title mb-0">Bandwidth policies</h1>
+  <div class="d-flex gap-2">
+    <form method="post" action="{% url 'adminpanel:policy_sync_all' %}">{% csrf_token %}<button class="btn btn-outline-secondary">Sync all to router</button></form>
+    <a class="btn btn-primary" href="{% url 'adminpanel:policy_add' %}">Add policy</a>
+  </div>
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Name</th><th>Down / Up</th><th>Quota</th><th>Timeout</th><th>Router profile</th><th>Instructors</th><th>Router sync</th><th></th></tr></thead>
+  <tbody>
+  {% for p in policies %}
+    <tr>
+      <td><strong>{{ p.name }}</strong>{% if p.is_default %} <span class="badge text-bg-primary">default</span>{% endif %}</td>
+      <td>{{ p.max_speed_down_mbps|floatformat:"-2" }} / {{ p.max_speed_up_mbps|floatformat:"-2" }} Mbps</td>
+      <td>{% if p.quota_limit_mb %}{{ p.quota_limit_mb|floatformat:"-0" }} MB{% else %}Unlimited{% endif %}</td>
+      <td>{% if p.session_timeout_minutes %}{{ p.session_timeout_minutes }} min{% else %}-{% endif %}</td>
+      <td class="mono">{{ p.mikrotik_profile_name }}</td>
+      <td>{{ p.n_accounts }}</td>
+      <td>
+        {% if p.sync_status == 'ok' %}<span class="badge text-bg-success">Synced</span> <span class="small text-muted">{{ p.last_synced_at|date:"M d, g:i A" }}</span>
+        {% elif p.sync_status == 'failed' %}<span class="badge text-bg-danger" title="{{ p.sync_message }}">Failed</span> <span class="small text-danger">{{ p.sync_message|truncatechars:50 }}</span>
+        {% else %}<span class="badge text-bg-warning">Not synced</span>{% endif %}
+      </td>
+      <td class="text-end text-nowrap">
+        <form method="post" action="{% url 'adminpanel:policy_sync' p.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Sync to router</button></form>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:policy_edit' p.pk %}">Edit</a>
+        <form method="post" action="{% url 'adminpanel:policy_delete' p.pk %}" class="d-inline">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-danger" data-confirm="Delete policy {{ p.name }}?" data-confirm-title="Delete policy" data-confirm-btn="Delete">Delete</button></form>
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="8" class="text-center text-muted py-4">No policies yet.</td></tr>{% endfor %}
+  </tbody></table></div></div>
+<p class="small text-muted mt-2">Download/upload speeds become the hotspot profile <span class="mono">rate-limit</span> (upload/download); quota becomes the user's <span class="mono">limit-bytes-total</span>. Profiles are pushed automatically when an instructor connects; use sync to push them in advance.</p>
+{% endblock %}

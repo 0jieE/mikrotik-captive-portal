@@ -1,0 +1,22 @@
+{% extends 'base_portal.html' %}
+{% block title %}My sessions{% endblock %}
+{% block content %}
+<h1 class="h4 page-title mb-3">My session history</h1>
+<div class="card"><div class="card-body">
+  <div class="table-responsive">
+  <table class="table table-sm datatable" data-page-length="10">
+    <thead><tr><th>Connected</th><th>Disconnected</th><th>Data (MB)</th><th>Ended by</th></tr></thead>
+    <tbody>
+    {% for s in sessions %}
+      <tr>
+        <td data-order="{{ s.login_time|date:'U' }}">{{ s.login_time|date:"M d, Y g:i A" }}</td>
+        <td>{{ s.logout_time|date:"M d, Y g:i A"|default:"-" }}</td>
+        <td>{{ s.consumption|floatformat:1 }}</td>
+        <td>{{ s.get_logout_reason_display|default:"-" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div></div>
+{% endblock %}

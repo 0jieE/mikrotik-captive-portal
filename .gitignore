@@ -1,0 +1,21 @@
+env/
+.env
+db.sqlite3
+.mock_router.json
+__pycache__/
+*.pyc
+staticfiles/
+*.log
+.idea/
+.vscode/
+logs/
+backups/
+tools/nssm.exe
+SEEDED_CREDENTIALS.md
+
+# scratch / local-only files
+/login.html
+winbox_terminal.txt
+release/
+*.dump
+*.sqlite3

@@ -1,0 +1,34 @@
+{% extends 'base_public.html' %}
+{% block title %}Wi-Fi login{% endblock %}
+{% block content %}
+<div class="card portal-card shadow">
+  <div class="card-body p-4">
+    <h2 class="h5 text-center mb-1">Sign in to use the Wi-Fi</h2>
+    <p class="text-center text-muted small mb-3">Use your username and password.</p>
+    {% include 'partials/_messages.html' %}
+    {% if error %}
+    <div class="alert alert-{% if error_code == 'quota' %}warning{% else %}danger{% endif %} py-2" role="alert">{{ error }}
+      {% if error_code == 'not_instructor' %}<br><a class="alert-link" href="{% url 'accounts:staff_login' %}">Go to the staff login &rarr;</a>{% endif %}</div>
+    {% endif %}
+    <form method="post" action="{% url 'portal:login' %}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="mac" value="{{ mac }}">
+      <input type="hidden" name="ip" value="{{ ip }}">
+      <input type="hidden" name="dst" value="{{ dst }}">
+      <div class="mb-3">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-control form-control-lg" id="username" name="username" value="{{ username }}"
+               autocomplete="username" autocapitalize="none" autocorrect="off" inputmode="text" required autofocus>
+      </div>
+      <div class="mb-4">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-control form-control-lg" id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-wifi me-2"></i>Connect</button>
+    </form>
+    <p class="text-center small mt-3 mb-1">New instructor? <a href="{% url 'portal:signup' %}">Create an account</a></p>
+    <p class="text-center small text-muted mb-0">Forgot your password? Ask the ICT office to reset it.</p>
+  </div>
+</div>
+<p class="text-center mt-3"><a class="portal-pill" href="{% url 'accounts:staff_login' %}"><i class="bi bi-shield-lock me-1"></i>Staff login</a></p>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base_admin.html' %}
+{% block title %}Import complete{% endblock %}
+{% block content %}
+<h1 class="h3 page-title mb-3">Import complete</h1>
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Created</div><div class="stat-value text-success">{{ summary.created }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Updated</div><div class="stat-value">{{ summary.updated }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Semester accounts created</div><div class="stat-value">{{ summary.accounts_created }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Rows skipped</div><div class="stat-value">{{ skipped }}</div></div></div></div>
+</div>
+
+{% if has_credentials %}
+<div class="card border-warning mb-3"><div class="card-body">
+  <h2 class="h5">Credentials sheet</h2>
+  <p class="mb-2">Passwords were generated for <strong>{{ summary.created }}</strong> new instructor{{ summary.created|pluralize }}. They are <strong>not kept permanently</strong>; once this sheet expires or is cleared they cannot be recovered (you can still reset any instructor's password).
+    Download the sheet now (available for about {{ ttl_minutes }} minutes), print it for distribution, then clear it. Instructors must change their password at first login.</p>
+  <a class="btn btn-warning" href="{% url 'adminpanel:credentials_sheet' %}?format=csv">Download CSV</a>
+  <a class="btn btn-warning" href="{% url 'adminpanel:credentials_sheet' %}?format=xlsx">Download Excel</a>
+  <form method="post" action="{% url 'adminpanel:credentials_clear' %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-secondary">Clear sheet</button></form>
+</div></div>
+{% else %}
+<div class="alert alert-info">No new instructors were created, so there is no credentials sheet.</div>
+{% endif %}
+<a class="btn btn-primary" href="{% url 'adminpanel:instructor_list' %}">Go to instructors</a>
+{% endblock %}

@@ -1,0 +1,276 @@
+// =====================================================================================
+// CDK Instructor Wi-Fi portal - database schema (dbdiagram.io / DBML)
+//
+// How to use: open https://dbdiagram.io/d , choose "Import" -> "From DBML" (or just paste
+// this whole file into the editor on the left). The diagram appears on the right.
+// Export as PNG/PDF from the "Export" menu.
+//
+// Generated from the real Django models + the live PostgreSQL database (2026-10-09).
+// Source of truth: accounts/models.py, academics/models.py, instructors/models.py, network/models.py
+//
+// Not drawn (framework tables that Django creates itself): auth_group, auth_permission,
+// auth_group_permissions, user_groups, user_user_permissions, django_session,
+// django_content_type, django_admin_log, django_migrations.
+// =====================================================================================
+
+Project cdk_wifi_portal {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Colegio de Kidapawan - Instructor Wi-Fi access and bandwidth control
+
+    Django is the source of truth; the MikroTik hotspot only mirrors it.
+    An instructor connects only when ALL of these hold:
+    user.is_active, instructor.approval_status = approved, semester.is_active,
+    semester_account.is_active and total_bytes_used < policy quota.
+
+    Note on foreign keys: Django enforces the delete behaviour shown below
+    (cascade / set null / restrict) in the application, not with ON DELETE clauses in PostgreSQL.
+  '''
+}
+
+// ------------------------------------------------------------------------------------
+// Enums
+// ------------------------------------------------------------------------------------
+Enum semester_term {
+  "1st" [note: '1st Semester']
+  "2nd" [note: '2nd Semester']
+  "Summer"
+}
+
+Enum approval_status {
+  pending  [note: 'self-registered, waiting for an administrator']
+  approved [note: 'may connect (admin-created and imported instructors start here)']
+  rejected [note: 'registration refused']
+}
+
+Enum policy_sync_status {
+  never  [note: 'not pushed to the router yet, or changed since the last push']
+  ok     [note: 'profile exists on the router']
+  failed [note: 'last push failed, see sync_message']
+}
+
+Enum logout_reason {
+  user             [note: 'instructor logged out / disconnected']
+  idle             [note: 'router timeout, or the session vanished from the router']
+  quota            [note: 'data quota used up']
+  "admin-kick"     [note: 'disconnected by an administrator']
+  "semester-ended" [note: 'the semester was switched']
+}
+
+// ------------------------------------------------------------------------------------
+// accounts
+// ------------------------------------------------------------------------------------
+Table user [headercolor: #17603a] {
+  id                   bigint       [pk, increment]
+  password             varchar(128) [not null, note: 'Django-hashed (PBKDF2)']
+  last_login           timestamptz  [null]
+  is_superuser         boolean      [not null, default: false, note: 'may open /django-admin/']
+  username             varchar(150) [not null, unique, note: 'what an instructor signs in to the Wi-Fi portal with']
+  first_name           varchar(150) [not null, default: '']
+  last_name            varchar(150) [not null, default: '']
+  middle_name          varchar(100) [not null, default: '']
+  extension_name       varchar(20)  [not null, default: '', note: 'Jr., III ...']
+  is_staff             boolean      [not null, default: false]
+  is_active            boolean      [not null, default: true, note: 'false = account disabled']
+  is_admin             boolean      [not null, default: false, note: 'may use /admin-panel/']
+  is_instructor        boolean      [not null, default: false, note: 'may use the Wi-Fi portal']
+  must_change_password boolean      [not null, default: false, note: 'set after a temporary password is issued']
+  date_joined          timestamptz  [not null, default: `now()`]
+  created_at           timestamptz  [not null, default: `now()`]
+  updated_at           timestamptz  [not null, default: `now()`]
+
+  Note: 'Administrators and instructors share this table. No e-mail address is stored.'
+}
+
+Table audit_log [headercolor: #17603a] {
+  id         bigint       [pk, increment]
+  actor_id   bigint       [null, note: 'null = system or an anonymous visitor (e.g. a self-registration)']
+  action     varchar(60)  [not null, note: 'e.g. login.success, instructor.approved, session.kicked']
+  target     varchar(200) [not null, default: '']
+  details    jsonb        [not null, default: '{}']
+  ip_address inet         [null]
+  created_at timestamptz  [not null, default: `now()`]
+
+  indexes {
+    action
+    created_at
+    actor_id
+  }
+
+  Note: 'Every admin action and every login success / failure / denial.'
+}
+
+Table login_attempt [headercolor: #17603a] {
+  id         bigint       [pk, increment]
+  username   varchar(150) [not null]
+  ip_address inet         [null]
+  success    boolean      [not null, default: false]
+  created_at timestamptz  [not null, default: `now()`]
+
+  indexes {
+    (username, ip_address, created_at)
+    username
+    created_at
+  }
+
+  Note: 'Login rate limiting: 5 failures per (username, IP) = 5-minute lockout.'
+}
+
+// ------------------------------------------------------------------------------------
+// academics
+// ------------------------------------------------------------------------------------
+Table school_year [headercolor: #2f8f5a] {
+  id bigint     [pk, increment]
+  sy varchar(9) [not null, unique, note: 'e.g. 2026-2027']
+}
+
+Table semester [headercolor: #2f8f5a] {
+  id         bigint        [pk, increment]
+  semester   semester_term [not null]
+  sy_id      bigint        [not null]
+  start_date date          [not null]
+  end_date   date          [null]
+  is_active  boolean       [not null, default: false, note: 'only ONE semester may be active (enforced in code)']
+
+  indexes {
+    (semester, sy_id) [unique, name: 'uniq_semester_per_sy']
+    sy_id
+  }
+}
+
+Table bandwidth_policy [headercolor: #2f8f5a] {
+  id                      bigint             [pk, increment]
+  name                    varchar(60)        [not null, unique, note: 'e.g. Standard, Restricted']
+  max_speed_down_mbps     "double precision" [not null, note: 'megabits per second']
+  max_speed_up_mbps       "double precision" [not null, note: 'megabits per second']
+  quota_limit_mb          "double precision" [null, note: 'null = unlimited; becomes limit-bytes-total on the router']
+  session_timeout_minutes integer            [null, note: 'null = no timeout']
+  is_default              boolean            [not null, default: false, note: 'only one default (enforced in code)']
+  mikrotik_profile_name   varchar(80)        [not null, unique, note: 'auto-generated, e.g. cdk-standard']
+  sync_status             policy_sync_status [not null, default: 'never']
+  sync_message            varchar(255)       [not null, default: '']
+  last_synced_at          timestamptz        [null]
+
+  Note: 'Reusable named policy. Speeds become the hotspot profile rate-limit (upload/download).'
+}
+
+// ------------------------------------------------------------------------------------
+// instructors
+// ------------------------------------------------------------------------------------
+Table instructor [headercolor: #184f34] {
+  id                bigint          [pk, increment]
+  user_id           bigint          [not null, unique]
+  approval_status   approval_status [not null, default: 'approved']
+  registered_at     timestamptz     [not null, default: `now()`]
+  reviewed_at       timestamptz     [null]
+  reviewed_by_id    bigint          [null, note: 'the administrator who approved / rejected']
+
+  indexes {
+    approval_status
+    reviewed_by_id
+  }
+
+  Note: 'Profile of a user who connects to the Wi-Fi (the sign-in name is user.username). Self-registrations start as pending.'
+}
+
+Table semester_account [headercolor: #184f34] {
+  id               bigint       [pk, increment]
+  instructor_id    bigint       [not null]
+  semester_id      bigint       [not null]
+  policy_id        bigint       [not null]
+  is_active        boolean      [not null, default: true]
+  hotspot_password varchar(64)  [not null, note: 'random; pushed to the router, never shown to the instructor']
+  total_bytes_used bigint       [not null, default: 0, note: 'running total for the semester, compared with the policy quota']
+  created_at       timestamptz  [not null, default: `now()`]
+
+  indexes {
+    (instructor_id, semester_id) [unique, name: 'uniq_account_per_semester']
+    instructor_id
+    semester_id
+    policy_id
+  }
+
+  Note: 'One instructor has many accounts: one per semester, each with its own policy and usage.'
+}
+
+// ------------------------------------------------------------------------------------
+// network
+// ------------------------------------------------------------------------------------
+Table session [headercolor: #12402a] {
+  id                  bigint       [pk, increment]
+  instructor_id       bigint       [not null]
+  semester_account_id bigint       [null, note: 'kept even if the account row is removed (set null)']
+  login_time          timestamptz  [not null]
+  logout_time         timestamptz  [null]
+  mac_address         varchar(17)  [not null, default: '']
+  ip_address          inet         [null]
+  consumption         "double precision" [not null, default: 0, note: 'MB, bytes in + out']
+  bytes_in            bigint       [not null, default: 0, note: 'client to router (upload)']
+  bytes_out           bigint       [not null, default: 0, note: 'router to client (download)']
+  mikrotik_session_id varchar(20)  [not null, default: '', note: 'RouterOS .id; it is reused by the router, so it is always matched together with the username']
+  is_active           boolean      [not null, default: true, note: 'true = currently online']
+  logout_reason       logout_reason [not null, default: '', note: 'empty while the session is open']
+
+  indexes {
+    login_time
+    is_active
+    (instructor_id, is_active)
+    (instructor_id, login_time)
+    semester_account_id
+  }
+
+  Note: 'One row per Wi-Fi connection. Updated every 30 s by the sync_sessions service.'
+}
+
+Table sync_state [headercolor: #12402a] {
+  id           bigint       [pk, increment]
+  name         varchar(30)  [not null, unique, note: 'currently only "sessions"']
+  last_run     timestamptz  [null]
+  last_success timestamptz  [null]
+  last_error   varchar(500) [not null, default: '']
+  last_stats   jsonb        [not null, default: '{}']
+
+  Note: 'Heartbeat of the sync_sessions service; the admin dashboard warns when it is stale.'
+}
+
+// ------------------------------------------------------------------------------------
+// Relationships
+// ------------------------------------------------------------------------------------
+Ref: audit_log.actor_id > user.id [delete: set null]
+
+Ref: semester.sy_id > school_year.id [delete: restrict]
+
+Ref: instructor.user_id - user.id [delete: cascade]
+Ref: instructor.reviewed_by_id > user.id [delete: set null]
+
+Ref: semester_account.instructor_id > instructor.id [delete: cascade]
+Ref: semester_account.semester_id > semester.id [delete: restrict]
+Ref: semester_account.policy_id > bandwidth_policy.id [delete: restrict]
+
+Ref: session.instructor_id > instructor.id [delete: cascade]
+Ref: session.semester_account_id > semester_account.id [delete: set null]
+
+// ------------------------------------------------------------------------------------
+// Groups (colour-coded in the diagram)
+// ------------------------------------------------------------------------------------
+TableGroup accounts {
+  user
+  audit_log
+  login_attempt
+}
+
+TableGroup academics {
+  school_year
+  semester
+  bandwidth_policy
+}
+
+TableGroup instructors {
+  instructor
+  semester_account
+}
+
+TableGroup network {
+  session
+  sync_state
+}

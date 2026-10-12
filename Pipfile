@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = ">=5.1,<5.3"
+django-environ = "*"
+psycopg = {extras = ["binary"], version = "*"}
+librouteros = "*"
+openpyxl = "*"
+xhtml2pdf = "*"
+whitenoise = "*"
+waitress = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3"

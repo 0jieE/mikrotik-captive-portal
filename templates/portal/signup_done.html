@@ -1,0 +1,14 @@
+{% extends 'base_public.html' %}
+{% block title %}Registration received{% endblock %}
+{% block tagline %}Instructor registration{% endblock %}
+{% block content %}
+<div class="card portal-card shadow">
+  <div class="card-body p-4 text-center">
+    <div class="stat-icon ic-green mx-auto mb-3" style="width:64px;height:64px;font-size:1.9rem;border-radius:20px"><i class="bi bi-hourglass-split"></i></div>
+    <h2 class="h5 mb-2">Registration received</h2>
+    <p class="text-muted mb-3">Your account is <strong>waiting for approval</strong> by the ICT office. You cannot use the Wi-Fi until an administrator approves it.</p>
+    <p class="small text-muted">Once approved, return to the Wi-Fi login page and sign in with your username and the password you just chose.</p>
+    <a class="btn btn-primary w-100 mt-2" href="{% url 'portal:login' %}">Back to sign in</a>
+  </div>
+</div>
+{% endblock %}

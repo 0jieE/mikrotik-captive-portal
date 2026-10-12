@@ -1,0 +1,19 @@
+{% extends 'base_portal.html' %}
+{% block title %}My Wi-Fi{% endblock %}
+{% block content %}
+<h1 class="h4 page-title mb-1">Hello, {{ request.user.first_name|default:request.user.username }}</h1>
+<p class="text-muted mb-3">{{ request.user.username }}</p>
+
+<div id="status" hx-get="{% url 'portal:dashboard_live' %}" hx-trigger="every 10s" hx-swap="innerHTML">
+  {% include 'portal/partials/status.html' %}
+</div>
+
+<div class="card mt-3 border-0 bg-transparent">
+  <div class="card-body small text-muted px-0">
+    <strong>Tip:</strong> this page stays available while you are on the school Wi-Fi at
+    <span class="mono text-body">{{ request.scheme }}://{{ request.get_host }}{% url 'portal:dashboard' %}</span>.
+    Bookmark it, or use your browser's <em>Add to Home screen</em>, to check your data any time - even after the
+    sign-in window closes by itself.
+  </div>
+</div>
+{% endblock %}

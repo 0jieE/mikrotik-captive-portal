@@ -1,0 +1,52 @@
+{% if not snap.online %}
+<div class="alert alert-danger d-flex align-items-start gap-2">
+  <span class="badge text-bg-danger mt-1">Router OFFLINE</span>
+  <div>{{ snap.error }}<div class="small">Instructor sessions on record are unchanged; usage will catch up when the router is reachable again.</div></div>
+</div>
+{% endif %}
+{% if snap.fasttrack %}
+<div class="alert alert-danger">
+  <strong>Speed limits may not be enforced.</strong> The router has an enabled <strong>FastTrack</strong> firewall rule, which lets
+  connections bypass the bandwidth queues, so instructors can exceed their plan (e.g. 40 Mbps on a 2 Mbps policy). A speed test
+  that looks limited does not prove otherwise. Disable the rule to guarantee the limits, in WinBox &rarr; New Terminal:
+  <code>/ip firewall filter disable [find action=fasttrack-connection]</code>
+  <span class="small d-block mt-1">See docs/MIKROTIK_SETUP.md, "Speed limits and FastTrack". This warning disappears once the rule is disabled.</span>
+</div>
+{% endif %}
+{% if not snap.sync.running %}
+<div class="alert alert-warning">
+  <strong>Usage sync is not running.</strong>
+  {% if snap.sync.never %}It has never run.{% else %}Last run {{ snap.sync.age }} seconds ago.{% endif %}
+  Instructor data usage and quotas are <strong>not being updated</strong> until you start
+  <code>scripts\run_sync_sessions.bat</code> (or <code>python manage.py sync_sessions</code>) and leave it running.
+  {% if snap.sync.error %}<div class="small mt-1">Last error: {{ snap.sync.error }}</div>{% endif %}
+</div>
+{% elif snap.sync.error %}
+<div class="alert alert-warning py-2 small">Usage sync is running but its last pass failed: {{ snap.sync.error }}</div>
+{% endif %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-2"><div class="card stat-card stat-icon-card h-100"><div class="card-body">
+    <span class="stat-icon {% if snap.online %}ic-green{% else %}ic-red{% endif %}"><i class="bi bi-router"></i></span>
+    <div><div class="stat-label">Router</div>
+    <div>{% if snap.online %}<span class="badge text-bg-success">Online</span>{% else %}<span class="badge text-bg-danger">Offline</span>{% endif %}{% if snap.mock %} <span class="badge text-bg-warning">mock</span>{% endif %}</div></div>
+  </div></div></div>
+  <div class="col-6 col-lg-2"><div class="card stat-card stat-icon-card h-100"><div class="card-body">
+    <span class="stat-icon ic-blue"><i class="bi bi-people"></i></span>
+    <div><div class="stat-label">Active users</div><div class="stat-value">{{ snap.active_users }}</div></div>
+  </div></div></div>
+  <div class="col-12 col-sm-6 col-lg-3"><div class="card stat-card stat-icon-card h-100"><div class="card-body">
+    <span class="stat-icon ic-amber"><i class="bi bi-speedometer2"></i></span>
+    <div><div class="stat-label">Bandwidth now</div><div class="stat-value">{{ snap.bandwidth }}</div>
+    <div class="small text-muted"><i class="bi bi-arrow-down"></i> {{ snap.bandwidth_down }} &nbsp; <i class="bi bi-arrow-up"></i> {{ snap.bandwidth_up }}</div></div>
+  </div></div></div>
+  <div class="col-6 col-sm-3 col-lg-2"><div class="card stat-card stat-icon-card h-100"><div class="card-body">
+    <span class="stat-icon ic-violet"><i class="bi bi-calendar-check"></i></span>
+    <div><div class="stat-label">Sessions today</div><div class="stat-value">{{ snap.sessions_today }}</div></div>
+  </div></div></div>
+  <div class="col-6 col-sm-3 col-lg-3"><div class="card stat-card stat-icon-card h-100"><div class="card-body">
+    <span class="stat-icon ic-slate"><i class="bi bi-cpu"></i></span>
+    <div><div class="stat-label">Router CPU</div>
+    {% if snap.resources %}<div class="stat-value">{{ snap.resources.cpu_load }}%</div>
+    <div class="small text-muted">up {{ snap.resources.uptime }}</div>{% else %}<div class="stat-value">-</div>{% endif %}</div>
+  </div></div></div>
+</div>

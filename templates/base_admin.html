@@ -1,0 +1,94 @@
+{% load static %}<!doctype html>
+<html lang="en" class="no-anim">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#184f34">
+  <title>{% block title %}Admin{% endblock %} - CDK Wi-Fi Admin</title>
+  <script>
+    /* restore the sidebar state before first paint (no flicker) */
+    try { if (localStorage.getItem('cdk.sidebar') === 'collapsed' && window.matchMedia('(min-width: 992px)').matches) document.documentElement.classList.add('sb-collapsed'); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/dataTables.bootstrap5.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+{% with ns=request.resolver_match.url_name %}
+<aside class="app-sidebar" id="appSidebar" aria-label="Main navigation">
+  <a href="{% url 'adminpanel:dashboard' %}" class="sb-brand">
+    <span class="brand-mark">CDK</span>
+    <span class="sb-brand-text"><strong>Wi-Fi Control</strong><small>Admin panel</small></span>
+  </a>
+  <nav class="sb-nav">
+    <a class="sb-link {% if ns == 'dashboard' %}active{% endif %}" href="{% url 'adminpanel:dashboard' %}" title="Dashboard"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+    <a class="sb-link {% if ns == 'monitoring' %}active{% endif %}" href="{% url 'adminpanel:monitoring' %}" title="Live monitoring"><i class="bi bi-activity"></i><span>Live monitoring</span></a>
+
+    <div class="sb-heading">People</div>
+    <a class="sb-link {% if 'instructor' in ns or 'masterlist' in ns or 'account_toggle' in ns %}active{% endif %}" href="{% url 'adminpanel:instructor_list' %}" title="Instructors"><i class="bi bi-mortarboard"></i><span>Instructors</span>{% if pending_registrations %}<b class="sb-badge" title="{{ pending_registrations }} registration(s) waiting for approval">{{ pending_registrations }}</b>{% endif %}</a>
+    <a class="sb-link {% if 'admin_' in ns %}active{% endif %}" href="{% url 'adminpanel:admin_list' %}" title="Administrators"><i class="bi bi-shield-lock"></i><span>Administrators</span></a>
+
+    <div class="sb-heading">Setup</div>
+    <a class="sb-link {% if 'semester' in ns or 'sy_' in ns %}active{% endif %}" href="{% url 'adminpanel:semester_list' %}" title="Semesters"><i class="bi bi-calendar3"></i><span>Semesters</span></a>
+    <a class="sb-link {% if 'policy' in ns %}active{% endif %}" href="{% url 'adminpanel:policy_list' %}" title="Bandwidth policies"><i class="bi bi-speedometer2"></i><span>Bandwidth policies</span></a>
+
+    <div class="sb-heading">Insights</div>
+    <a class="sb-link {% if 'report' in ns %}active{% endif %}" href="{% url 'adminpanel:reports' %}" title="Reports"><i class="bi bi-bar-chart-line"></i><span>Reports</span></a>
+    <a class="sb-link {% if ns == 'audit_logs' %}active{% endif %}" href="{% url 'adminpanel:audit_logs' %}" title="System logs"><i class="bi bi-journal-text"></i><span>System logs</span></a>
+  </nav>
+</aside>
+{% endwith %}
+<div class="sb-backdrop" id="sbBackdrop"></div>
+
+<div class="app-main">
+  <header class="app-topbar">
+    <button type="button" class="icon-btn" id="sbToggle" aria-label="Toggle navigation menu" aria-controls="appSidebar" aria-expanded="true" title="Toggle menu"><i class="bi bi-list"></i></button>
+    {% if active_semester %}
+      <span class="topbar-chip ok" title="Active semester"><i class="bi bi-calendar-check"></i><span class="chip-long">{{ active_semester }}</span></span>
+    {% else %}
+      <a href="{% url 'adminpanel:semester_list' %}" class="topbar-chip bad text-decoration-none" title="Internet is closed until a semester is active"><i class="bi bi-exclamation-triangle"></i><span class="chip-long">No active semester</span></a>
+    {% endif %}
+
+    <div class="dropdown ms-auto">
+      <button class="user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu">
+        <span class="avatar">{{ request.user.username|slice:":2" }}</span>
+        <span class="user-name text-start lh-sm"><span class="d-block fw-semibold small">{{ request.user.username }}</span><span class="d-block text-muted" style="font-size:.72rem">Administrator</span></span>
+        <i class="bi bi-chevron-down small text-muted d-none d-sm-inline"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li class="px-3 py-2 small text-muted">Signed in as<br><strong class="text-body">{{ request.user.get_full_name }}</strong></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}"><i class="bi bi-key me-2"></i>Change password</a></li>
+        {% if request.user.is_superuser %}<li><a class="dropdown-item" href="/django-admin/"><i class="bi bi-gear me-2"></i>Django admin</a></li>{% endif %}
+        <li><a class="dropdown-item" href="https://dbdiagram.io/d/ITE_Portal-697adfd4bd82f5fce2f776ef" target="_blank" rel="noopener noreferrer"><i class="bi bi-diagram-3 me-2"></i>Database schema</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Log out</button></form></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="app-content">
+    {% include 'partials/_messages.html' %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Please confirm</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body"></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="button" id="confirmOk" class="btn btn-danger">Confirm</button></div>
+  </div></div>
+</div>
+
+<script src="{% static 'vendor/jquery.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/htmx.min.js' %}"></script>
+<script src="{% static 'vendor/dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/dataTables.bootstrap5.min.js' %}"></script>
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

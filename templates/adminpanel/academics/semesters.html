@@ -1,0 +1,58 @@
+{% extends 'base_admin.html' %}
+{% block title %}Semesters{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 page-title mb-0">School years &amp; semesters</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'adminpanel:sy_add' %}">Add school year</a>
+    <a class="btn btn-primary" href="{% url 'adminpanel:semester_add' %}">Add semester</a>
+  </div>
+</div>
+
+<div class="alert {% if active %}alert-success{% else %}alert-warning{% endif %}">
+  {% if active %}Active semester: <strong>{{ active }}</strong>. Only one semester can be active; instructors can use the internet only during the active semester.
+  {% else %}No semester is active. <strong>Internet access is closed for everyone</strong> until you set one active.{% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8"><div class="card"><div class="card-header">Semesters</div>
+    <div class="table-responsive"><table class="table mb-0">
+      <thead class="table-light"><tr><th>Semester</th><th>Start</th><th>End</th><th>Accounts</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for s in semesters %}
+        <tr>
+          <td>{{ s }}</td><td>{{ s.start_date|date:"M d, Y" }}</td><td>{{ s.end_date|date:"M d, Y"|default:"-" }}</td><td>{{ s.n_accounts }}</td>
+          <td>{% if s.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Inactive</span>{% endif %}</td>
+          <td class="text-end text-nowrap">
+            {% if not s.is_active %}
+            <form method="post" action="{% url 'adminpanel:semester_activate' s.pk %}" class="d-inline"
+                  >{% csrf_token %}
+              <button class="btn btn-sm btn-outline-success"
+                data-confirm-title="Set {{ s }} as the active semester?"
+                data-confirm="{% if impact %}This will deactivate {{ impact.accounts }} account{{ impact.accounts|pluralize }} of {{ active }}, disable their router logins and disconnect {{ impact.sessions }} live session{{ impact.sessions|pluralize }}. This is logged and cannot be undone automatically.{% else %}No semester is active at the moment, so nothing needs to be shut down. Instructors with accounts in {{ s }} will be able to connect.{% endif %}"
+                data-confirm-btn="Set active" data-confirm-class="btn-success">Set active</button>
+            </form>
+            {% endif %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:semester_edit' s.pk %}">Edit</a>
+            <form method="post" action="{% url 'adminpanel:semester_delete' s.pk %}" class="d-inline">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" data-confirm="Delete {{ s }}?" data-confirm-title="Delete semester" data-confirm-btn="Delete">Delete</button></form>
+          </td>
+        </tr>
+      {% empty %}<tr><td colspan="6" class="text-center text-muted py-3">No semesters yet.</td></tr>{% endfor %}
+      </tbody></table></div></div></div>
+
+  <div class="col-lg-4"><div class="card"><div class="card-header">School years</div>
+    <ul class="list-group list-group-flush">
+    {% for y in school_years %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ y.sy }} <span class="badge text-bg-light">{{ y.n }} sem.</span></span>
+        <span class="text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:sy_edit' y.pk %}">Edit</a>
+          <form method="post" action="{% url 'adminpanel:sy_delete' y.pk %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" data-confirm="Delete school year {{ y.sy }}?" data-confirm-title="Delete school year" data-confirm-btn="Delete">Delete</button></form>
+        </span>
+      </li>
+    {% empty %}<li class="list-group-item text-muted">No school years yet.</li>{% endfor %}
+    </ul></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base_admin.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title mb-0">Dashboard</h1>
+    <div class="text-muted small">Welcome back, {{ request.user.first_name|default:request.user.username }}.</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary" href="{% url 'adminpanel:instructor_add' %}"><i class="bi bi-person-plus me-1"></i>Add instructor</a>
+    <a class="btn btn-primary" href="{% url 'adminpanel:masterlist_upload' %}"><i class="bi bi-upload me-1"></i>Upload masterlist</a>
+  </div>
+</div>
+
+{% if pending_registrations %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2">
+  <div><i class="bi bi-hourglass-split me-2"></i><strong>{{ pending_registrations }} instructor registration{{ pending_registrations|pluralize }}</strong> waiting for your approval. They cannot use the Wi-Fi until approved.</div>
+  <a class="btn btn-sm btn-warning" href="{% url 'adminpanel:instructor_list' %}?registration=pending">Review now</a>
+</div>
+{% endif %}
+
+<div id="live-cards" hx-get="{% url 'adminpanel:monitoring_live' %}?view=cards" hx-trigger="load, every 5s" hx-swap="innerHTML">
+  <div class="text-muted small mb-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading router status...</div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-sm-4"><div class="card stat-card stat-icon-card"><div class="card-body">
+    <span class="stat-icon ic-green"><i class="bi bi-mortarboard"></i></span>
+    <div><div class="stat-label">Instructors</div><div class="stat-value">{{ n_instructors }}</div></div></div></div></div>
+  <div class="col-6 col-sm-4"><div class="card stat-card stat-icon-card"><div class="card-body">
+    <span class="stat-icon ic-blue"><i class="bi bi-broadcast"></i></span>
+    <div><div class="stat-label">Online now</div><div class="stat-value">{{ n_online }}</div></div></div></div></div>
+  <div class="col-6 col-sm-4"><div class="card stat-card stat-icon-card"><div class="card-body">
+    <span class="stat-icon ic-violet"><i class="bi bi-wifi"></i></span>
+    <div><div class="stat-label">Active accounts</div><div class="stat-value">{{ n_accounts }}</div></div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card h-100"><div class="card-header"><i class="bi bi-graph-up me-2 text-success"></i>Data usage, last 7 days (MB)</div>
+      <div class="card-body"><div class="chart-box"><canvas id="weekChart"></canvas></div></div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100"><div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-clock-history me-2 text-success"></i>Recent activity</span><a class="small fw-normal" href="{% url 'adminpanel:audit_logs' %}">All logs</a></div>
+      <ul class="list-group list-group-flush">
+        {% for l in recent_logs %}
+        <li class="list-group-item small d-flex gap-2 align-items-start">
+          <span class="stat-icon ic-green flex-shrink-0" style="width:32px;height:32px;font-size:.95rem;border-radius:10px"><i class="bi bi-dot"></i></span>
+          <div class="min-w-0"><strong>{{ l.action }}</strong> <span class="text-muted">{{ l.target }}</span><br><span class="text-muted">{{ l.actor.username|default:"system" }} &middot; {{ l.created_at|date:"M d, g:i A" }}</span></div>
+        </li>
+        {% empty %}<li class="list-group-item text-muted small">Nothing yet.</li>{% endfor %}
+      </ul></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}{{ chart|json_script:"week-data" }}
+<script>
+  var wk = JSON.parse(document.getElementById('week-data').textContent);
+  cdkChart('weekChart', 'bar', wk.labels, wk.data, 'MB');
+</script>{% endblock %}

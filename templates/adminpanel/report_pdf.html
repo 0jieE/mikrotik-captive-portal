@@ -1,0 +1,42 @@
+{% load cdk %}<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 1.5cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #222; }
+  h1 { font-size: 16pt; color: #17603a; margin: 0; }
+  h2 { font-size: 11pt; color: #17603a; margin: 14px 0 4px; border-bottom: 1px solid #17603a; padding-bottom: 2px; }
+  .sub { color: #666; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #17603a; color: #fff; text-align: left; padding: 3px 4px; font-size: 8pt; }
+  td { padding: 3px 4px; border-bottom: 1px solid #ddd; font-size: 8pt; }
+  .r { text-align: right; }
+  .totals td { font-weight: bold; }
+</style></head>
+<body>
+  <h1>Colegio de Kidapawan, Inc. &mdash; Wi-Fi Usage Report</h1>
+  <div class="sub">
+    Period: {{ start|date:"M d, Y" }} to {{ end|date:"M d, Y" }}
+    {% if semester %} &middot; Active semester: {{ semester }}{% endif %}<br>
+    Generated {{ generated|date:"M d, Y g:i A" }}
+  </div>
+
+  <h2>Summary</h2>
+  <table class="totals"><tr><td>Total usage: {{ total_mb|mb }} MB</td><td>Sessions: {{ total_sessions }}</td><td>Instructors who used the network: {{ per_instructor|length }}</td></tr></table>
+
+  <h2>Top 10 consumers</h2>
+  <table><tr><th>#</th><th>Username</th><th>Name</th><th class="r">Sessions</th><th class="r">MB</th></tr>
+  {% for s in top %}<tr><td>{{ forloop.counter }}</td><td>{{ s.username }}</td><td>{{ s.name }}</td><td class="r">{{ s.sessions }}</td><td class="r">{{ s.mb|mb }}</td></tr>
+  {% empty %}<tr><td colspan="5">No usage in this period.</td></tr>{% endfor %}</table>
+
+  <h2>Daily usage</h2>
+  <table><tr><th>Date</th><th class="r">Sessions</th><th class="r">MB</th></tr>
+  {% for d in daily %}<tr><td>{{ d.day|date:"D, M d Y" }}</td><td class="r">{{ d.sessions }}</td><td class="r">{{ d.mb|mb }}</td></tr>{% endfor %}</table>
+
+  <h2>Usage by instructor</h2>
+  <table><tr><th>Username</th><th>Name</th><th class="r">Sessions</th><th class="r">MB</th></tr>
+  {% for s in per_instructor %}<tr><td>{{ s.username }}</td><td>{{ s.name }}</td><td class="r">{{ s.sessions }}</td><td class="r">{{ s.mb|mb }}</td></tr>{% endfor %}</table>
+
+  <h2>Session log (latest {{ log|length }})</h2>
+  <table><tr><th>Instructor</th><th>Login</th><th>Logout</th><th>IP</th><th class="r">MB</th><th>Ended by</th></tr>
+  {% for s in log %}<tr><td>{{ s.instructor.user.get_full_name }}</td><td>{{ s.login_time|date:"m/d H:i" }}</td><td>{{ s.logout_time|date:"m/d H:i"|default:"online" }}</td><td>{{ s.ip_address|default:"-" }}</td><td class="r">{{ s.consumption|mb }}</td><td>{{ s.get_logout_reason_display|default:"-" }}</td></tr>{% endfor %}</table>
+</body></html>

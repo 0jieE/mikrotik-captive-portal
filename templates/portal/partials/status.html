@@ -1,0 +1,73 @@
+{% load cdk %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="text-muted small text-uppercase">Connection</div>
+        {% if session %}
+          <div class="fs-5 fw-semibold text-success"><span class="badge-dot bg-success"></span>Connected</div>
+        {% else %}
+          <div class="fs-5 fw-semibold text-secondary"><span class="badge-dot bg-secondary"></span>Not connected</div>
+        {% endif %}
+      </div>
+      {% if session %}
+      <form method="post" action="{% url 'portal:disconnect' %}">{% csrf_token %}
+        <button class="btn btn-outline-danger btn-sm">Disconnect</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if session %}
+    <hr>
+    <div class="row g-2 small">
+      <div class="col-6"><span class="text-muted">IP address</span><br><span class="mono">{{ session.ip_address }}</span></div>
+      <div class="col-6"><span class="text-muted">MAC address</span><br><span class="mono">{{ session.mac_address }}</span></div>
+      <div class="col-6"><span class="text-muted">Connected since</span><br>{{ session.login_time|date:"M d, g:i A" }}</div>
+      <div class="col-6"><span class="text-muted">Session time</span><br>{{ session_seconds|hms }}</div>
+    </div>
+    {% elif not access.allowed %}
+    <div class="alert alert-{% if access.code == 'quota' %}danger{% elif access.code == 'pending_approval' %}info{% else %}warning{% endif %} mt-3 mb-0">
+      <div class="fw-semibold">{% if access.code == 'quota' %}Internet paused - quota used up{% elif access.code == 'pending_approval' %}Registration pending approval{% else %}Internet access is not available{% endif %}</div>
+      <div class="small">{{ access.message }}</div>
+      {% if access.code == 'quota' %}<div class="small mt-1">You can still check your usage and history here. Ask the ICT office if you need more data.</div>{% endif %}
+    </div>
+    {% else %}
+    {% if last_closed %}
+    <div class="alert alert-secondary py-2 small mt-3 mb-2">
+      Your last session ended {{ last_closed.logout_time|date:"M d, g:i A" }}
+      {% if last_closed.logout_reason == 'admin-kick' %}- <strong>you were disconnected by an administrator</strong>. You can reconnect now.
+      {% elif last_closed.logout_reason == 'idle' %}- the connection timed out.
+      {% elif last_closed.logout_reason == 'user' %}- you disconnected.{% endif %}
+    </div>
+    {% endif %}
+    <p class="small text-muted mt-3 mb-2">This device is not online yet.</p>
+    <form method="post" action="{% url 'portal:connect' %}">{% csrf_token %}
+      <button class="btn btn-primary w-100">Connect this device</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if account %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between"><div class="text-muted small text-uppercase">Data this semester</div><div class="small text-muted">{{ account.semester }}</div></div>
+    {% if quota_mb %}
+      <div class="fs-5 fw-semibold mb-2">{{ used_mb }} MB <span class="text-muted fs-6">of {{ quota_mb|floatformat:"-1" }} MB</span></div>
+      <div class="progress" role="progressbar" aria-valuenow="{{ account.quota_percent }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar {% if account.quota_percent >= 90 %}bg-danger{% elif account.quota_percent >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+             style="width: {{ account.quota_percent }}%">{{ account.quota_percent }}%</div>
+      </div>
+      {% if account.quota_exceeded %}<div class="text-danger small mt-2">Your quota is used up. Internet access is paused.</div>{% endif %}
+    {% else %}
+      <div class="fs-5 fw-semibold">{{ used_mb }} MB <span class="text-muted fs-6">(unlimited plan)</span></div>
+    {% endif %}
+  </div>
+</div>
+<div class="card">
+  <div class="card-body small">
+    <div class="text-muted text-uppercase mb-1">Your plan: {{ policy.name }}</div>
+    Download up to <strong>{{ policy.max_speed_down_mbps|floatformat:"-2" }} Mbps</strong> &middot;
+    Upload up to <strong>{{ policy.max_speed_up_mbps|floatformat:"-2" }} Mbps</strong>
+  </div>
+</div>
+{% endif %}

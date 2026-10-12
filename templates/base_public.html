@@ -1,0 +1,24 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12402a">
+  <title>{% block title %}CDK Wi-Fi{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="portal-bg">
+  <div class="container py-4 py-md-5">
+    <div class="text-center text-white mb-4">
+      <span class="brand-mark mb-3" style="width:56px;height:56px;border-radius:17px;font-size:1.1rem">CDK</span>
+      <h1 class="h4 mb-1 fw-bold">Colegio de Kidapawan, Inc.</h1>
+      <div class="small opacity-75"><i class="bi bi-wifi me-1"></i>{% block tagline %}Instructor Wi-Fi Access{% endblock %}</div>
+    </div>
+    {% block content %}{% endblock %}
+    <p class="text-center mt-4 mb-0"><span class="portal-pill">&copy; Colegio de Kidapawan, Inc. &middot; ICT Office</span></p>
+  </div>
+  <script src="{% static 'vendor/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

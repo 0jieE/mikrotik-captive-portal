@@ -1,0 +1,34 @@
+{% extends 'base_admin.html' %}
+{% block title %}Administrators{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 page-title mb-0">Administrators</h1>
+  <a class="btn btn-primary" href="{% url 'adminpanel:admin_add' %}">Add administrator</a>
+</div>
+<div class="card"><div class="card-body"><div class="table-responsive">
+  <table class="table table-hover datatable" data-page-length="25">
+    <thead><tr><th>Username</th><th>Name</th><th>Status</th><th>Last login</th><th data-orderable="false"></th></tr></thead>
+    <tbody>
+    {% for a in admins %}
+      <tr>
+        <td class="mono">{{ a.username }}{% if a.pk == request.user.pk %} <span class="badge text-bg-info">you</span>{% endif %}</td>
+        <td>{{ a.get_full_name }}</td>
+        <td>{% if a.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-danger">Inactive</span>{% endif %}</td>
+        <td>{{ a.last_login|date:"M d, Y g:i A"|default:"never" }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:admin_edit' a.pk %}">Edit</a>
+          <form method="post" action="{% url 'adminpanel:admin_toggle_active' a.pk %}" class="d-inline">{% csrf_token %}
+            {% if a.is_active %}
+              <button class="btn btn-sm btn-outline-danger" {% if a.pk == request.user.pk %}disabled title="You cannot deactivate yourself"{% endif %}
+                data-confirm="Deactivate administrator {{ a.username }}?" data-confirm-title="Deactivate administrator" data-confirm-btn="Deactivate">Deactivate</button>
+            {% else %}
+              <button class="btn btn-sm btn-outline-success">Activate</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div></div>
+{% endblock %}

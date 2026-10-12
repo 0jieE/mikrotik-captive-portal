@@ -1,0 +1,25 @@
+{% extends 'base_public.html' %}
+{% block title %}Create an account{% endblock %}
+{% block tagline %}Instructor registration{% endblock %}
+{% block content %}
+<div class="card portal-card shadow">
+  <div class="card-body p-4">
+    <h2 class="h5 text-center mb-1">Create your account</h2>
+    <p class="text-center text-muted small mb-3">An administrator must approve your registration before you can use the Wi-Fi.</p>
+    {% if form.non_field_errors %}<div class="alert alert-danger py-2" role="alert">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    <form method="post" action="{% url 'portal:signup' %}" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for e in field.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button class="btn btn-primary btn-lg w-100 mt-2" type="submit"><i class="bi bi-person-plus me-2"></i>Register</button>
+    </form>
+    <p class="text-center small text-muted mt-3 mb-0">Already registered? <a href="{% url 'portal:login' %}">Sign in</a></p>
+  </div>
+</div>
+{% endblock %}

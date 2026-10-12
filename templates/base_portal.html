@@ -1,0 +1,46 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#184f34">
+  <title>{% block title %}My Wi-Fi{% endblock %} - CDK</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/dataTables.bootstrap5.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="has-tabs" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+{% with ns=request.resolver_match.url_name %}
+<header class="portal-top">
+  <div class="container portal-main">
+    <a class="brand" href="{% url 'portal:dashboard' %}"><span class="brand-mark">CDK</span><span>Instructor Wi-Fi</span></a>
+    <nav class="portal-links" aria-label="Main">
+      <a class="tab-link {% if ns == 'dashboard' %}active{% endif %}" href="{% url 'portal:dashboard' %}"><i class="bi bi-house-door me-1"></i>Home</a>
+      <a class="tab-link {% if ns == 'history' %}active{% endif %}" href="{% url 'portal:history' %}"><i class="bi bi-clock-history me-1"></i>History</a>
+      <a class="tab-link {% if ns == 'change_password' %}active{% endif %}" href="{% url 'accounts:change_password' %}"><i class="bi bi-key me-1"></i>Password</a>
+      <form method="post" action="{% url 'portal:logout' %}" class="ms-1">{% csrf_token %}<button class="btn btn-sm btn-light"><i class="bi bi-box-arrow-right me-1"></i>Log out</button></form>
+    </nav>
+  </div>
+</header>
+
+<main class="container portal-main py-4">
+  {% include 'partials/_messages.html' %}
+  {% block content %}{% endblock %}
+</main>
+
+<nav class="portal-tabs" aria-label="Mobile">
+  <a class="{% if ns == 'dashboard' %}active{% endif %}" href="{% url 'portal:dashboard' %}"><i class="bi bi-house-door"></i>Home</a>
+  <a class="{% if ns == 'history' %}active{% endif %}" href="{% url 'portal:history' %}"><i class="bi bi-clock-history"></i>History</a>
+  <a class="{% if ns == 'change_password' %}active{% endif %}" href="{% url 'accounts:change_password' %}"><i class="bi bi-key"></i>Password</a>
+</nav>
+{% endwith %}
+<script src="{% static 'vendor/jquery.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/htmx.min.js' %}"></script>
+<script src="{% static 'vendor/dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/dataTables.bootstrap5.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,139 @@
+{% extends 'base_admin.html' %}
+{% load cdk %}
+{% block title %}{{ instructor.user.get_full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <a class="small" href="{% url 'adminpanel:instructor_list' %}">&larr; Instructors</a>
+    <h1 class="h3 page-title mb-1">{{ instructor.user.get_full_name }}</h1>
+    <div>
+      <span class="mono">{{ instructor.user.username }}</span>
+      {% if instructor.user.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-danger">Inactive</span>{% endif %}
+      {% if current_session %}<span class="badge text-bg-success"><span class="badge-dot bg-white"></span>Online</span>{% endif %}
+      {% if instructor.user.must_change_password %}<span class="badge text-bg-warning">Must change password</span>{% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary" href="{% url 'adminpanel:instructor_edit' instructor.pk %}">Edit</a>
+    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#resetModal">Reset password</button>
+    <form method="post" action="{% url 'adminpanel:instructor_push_router' instructor.pk %}">{% csrf_token %}<button class="btn btn-outline-secondary">Push to router</button></form>
+    <form method="post" action="{% url 'adminpanel:instructor_toggle_active' instructor.pk %}">{% csrf_token %}
+      {% if instructor.user.is_active %}
+      <button class="btn btn-danger" data-confirm="Deactivate {{ instructor.user.get_full_name }}? Their router login will be disabled and any active session will be kicked." data-confirm-title="Deactivate account" data-confirm-btn="Deactivate">Deactivate</button>
+      {% else %}<button class="btn btn-success">Activate</button>{% endif %}
+    </form>
+  </div>
+</div>
+
+{% if instructor.approval_status != 'approved' %}
+<div class="card border-warning mb-3"><div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <div class="fw-semibold">{% if instructor.approval_status == 'pending' %}<i class="bi bi-hourglass-split text-warning me-1"></i>Registration waiting for approval{% else %}<i class="bi bi-x-octagon text-danger me-1"></i>Registration was rejected{% endif %}</div>
+    <div class="small text-muted">Registered {{ instructor.registered_at|date:"M d, Y g:i A" }}.
+      {% if instructor.reviewed_at %}Reviewed {{ instructor.reviewed_at|date:"M d, Y g:i A" }}{% if instructor.reviewed_by %} by {{ instructor.reviewed_by.username }}{% endif %}.{% endif %}
+      This instructor cannot connect to the Wi-Fi until approved.</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <form method="post" action="{% url 'adminpanel:instructor_approve' instructor.pk %}" class="d-flex gap-2">{% csrf_token %}
+      <select name="policy" class="form-select form-select-sm" aria-label="Bandwidth policy">
+        {% for p in policies %}<option value="{{ p.pk }}" {% if default_policy and p.pk == default_policy.pk %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-sm btn-success text-nowrap"><i class="bi bi-check2-circle me-1"></i>Approve</button>
+    </form>
+    {% if instructor.approval_status == 'pending' %}
+    <form method="post" action="{% url 'adminpanel:instructor_reject' instructor.pk %}">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-danger" data-confirm="Reject the registration of {{ instructor.user.get_full_name }}? They will not be able to connect." data-confirm-title="Reject registration" data-confirm-btn="Reject">Reject</button>
+    </form>
+    {% endif %}
+  </div>
+</div></div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-4"><div class="card h-100"><div class="card-header">Profile</div>
+    <dl class="row mb-0 p-3 small">
+      <dt class="col-5">Username</dt><dd class="col-7 mono">{{ instructor.user.username }}</dd>
+      <dt class="col-5">Created</dt><dd class="col-7">{{ instructor.user.created_at|date:"M d, Y" }}</dd>
+      <dt class="col-5">Last login</dt><dd class="col-7">{{ instructor.user.last_login|date:"M d, Y g:i A"|default:"never" }}</dd>
+    </dl></div></div>
+
+  <div class="col-lg-4"><div class="card h-100"><div class="card-header">This semester's account</div>
+    <div class="card-body">
+    {% if current_account %}
+      <div class="d-flex justify-content-between mb-1"><strong>{{ current_account.policy.name }}</strong>
+        <span class="small text-muted">{{ current_account.policy.max_speed_down_mbps|floatformat:"-2" }}/{{ current_account.policy.max_speed_up_mbps|floatformat:"-2" }} Mbps</span></div>
+      {% if current_account.policy.quota_limit_mb %}
+      <div class="progress mb-1"><div class="progress-bar {% if current_account.quota_percent >= 90 %}bg-danger{% elif current_account.quota_percent >= 70 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ current_account.quota_percent }}%">{{ current_account.quota_percent }}%</div></div>
+      <div class="small text-muted mb-3">{{ current_account.used_mb }} MB of {{ current_account.policy.quota_limit_mb|floatformat:"-0" }} MB</div>
+      {% else %}<div class="small text-muted mb-3">{{ current_account.used_mb }} MB used (unlimited)</div>{% endif %}
+    {% else %}
+      <p class="text-muted small">No account for the active semester{% if not current_account %} (assign a policy to create one){% endif %}.</p>
+    {% endif %}
+      <form method="post" action="{% url 'adminpanel:instructor_assign_policy' instructor.pk %}" class="d-flex gap-2">
+        {% csrf_token %}
+        <select name="policy" class="form-select form-select-sm">
+          {% for p in policies %}<option value="{{ p.pk }}" {% if current_account and current_account.policy_id == p.pk %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-sm btn-primary text-nowrap">Assign policy</button>
+      </form>
+    </div></div></div>
+
+  <div class="col-lg-4"><div class="card h-100"><div class="card-header">Current session</div>
+    <div class="card-body small">
+    {% if current_session %}
+      <div class="text-success fw-semibold mb-2">Connected</div>
+      <div>IP: <span class="mono">{{ current_session.ip_address }}</span></div>
+      <div>MAC: <span class="mono">{{ current_session.mac_address }}</span></div>
+      <div>Since: {{ current_session.login_time|date:"M d, g:i A" }}</div>
+      <div>Used so far: {{ current_session.consumption|mb }} MB</div>
+    {% else %}<span class="text-muted">Not connected.</span>{% endif %}
+    </div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-header">Semester accounts</div>
+  <div class="table-responsive"><table class="table mb-0">
+    <thead class="table-light"><tr><th>Semester</th><th>Policy</th><th>Used</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for a in accounts %}
+      <tr>
+        <td>{{ a.semester }}{% if a.semester.is_active %} <span class="badge text-bg-success">active</span>{% endif %}</td>
+        <td>{{ a.policy.name }}</td>
+        <td>{{ a.used_mb }} MB</td>
+        <td>{% if a.is_active %}<span class="badge text-bg-success">Enabled</span>{% else %}<span class="badge text-bg-secondary">Disabled</span>{% endif %}</td>
+        <td class="text-end"><form method="post" action="{% url 'adminpanel:account_toggle' a.pk %}">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-secondary">{% if a.is_active %}Disable{% else %}Enable{% endif %}</button></form></td>
+      </tr>
+    {% empty %}<tr><td colspan="5" class="text-muted text-center py-3">No semester accounts yet.</td></tr>{% endfor %}
+    </tbody></table></div></div>
+
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card"><div class="card-header">Usage, last 30 days (MB)</div>
+    <div class="card-body"><div class="chart-box"><canvas id="usageChart"></canvas></div></div></div></div>
+  <div class="col-lg-7"><div class="card"><div class="card-header">Session history</div>
+    <div class="card-body"><div class="table-responsive">
+      <table class="table table-sm datatable" data-page-length="10">
+        <thead><tr><th>Login</th><th>Logout</th><th>IP</th><th>MB</th><th>Ended by</th></tr></thead>
+        <tbody>
+        {% for s in history %}
+          <tr><td data-order="{{ s.login_time|date:'U' }}">{{ s.login_time|date:"M d, g:i A" }}</td><td>{{ s.logout_time|date:"M d, g:i A"|default:"-" }}</td>
+          <td class="mono">{{ s.ip_address|default:"-" }}</td><td>{{ s.consumption|mb }}</td><td>{{ s.get_logout_reason_display|default:"-" }}</td></tr>
+        {% endfor %}
+        </tbody></table></div></div></div></div>
+</div>
+
+<div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <form method="post" action="{% url 'adminpanel:instructor_reset_password' instructor.pk %}">{% csrf_token %}
+  <div class="modal-header"><h5 class="modal-title">Reset password</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <label class="form-label" for="id_password">Temporary password</label>
+    <input class="form-control" id="id_password" name="password" placeholder="Leave blank to generate one" autocomplete="off">
+    <div class="form-text">The instructor must change it at next login.</div>
+  </div>
+  <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Reset password</button></div>
+  </form></div></div></div>
+{% endblock %}
+{% block scripts %}{{ chart|json_script:"usage-data" }}
+<script>
+  var u = JSON.parse(document.getElementById('usage-data').textContent);
+  cdkChart('usageChart', 'bar', u.labels, u.data, 'MB');
+</script>{% endblock %}

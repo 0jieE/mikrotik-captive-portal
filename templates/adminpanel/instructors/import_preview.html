@@ -1,0 +1,40 @@
+{% extends 'base_admin.html' %}
+{% block title %}Masterlist preview{% endblock %}
+{% block content %}
+<a class="small" href="{% url 'adminpanel:masterlist_upload' %}">&larr; Upload a different file</a>
+<h1 class="h3 page-title mb-1">Preview: {{ filename }}</h1>
+<p class="text-muted">Nothing has been saved yet. Review, then confirm the import.</p>
+
+<div class="row g-3 mb-3">
+  <div class="col-4"><div class="card stat-card"><div class="card-body"><div class="stat-label">New instructors</div><div class="stat-value text-success">{{ counts.new }}</div></div></div></div>
+  <div class="col-4"><div class="card stat-card"><div class="card-body"><div class="stat-label">Existing (will be updated)</div><div class="stat-value">{{ counts.existing }}</div></div></div></div>
+  <div class="col-4"><div class="card stat-card"><div class="card-body"><div class="stat-label">Rows with errors (skipped)</div><div class="stat-value {% if counts.error %}text-danger{% endif %}">{{ counts.error }}</div></div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <div class="small">Accounts will be created for <strong>{{ semester|default:"(no active semester!)" }}</strong> on policy <strong>{{ policy.name|default:"(no policy!)" }}</strong>.</div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-light" href="{% url 'adminpanel:masterlist_cancel' %}">Cancel</a>
+    <form method="post" action="{% url 'adminpanel:masterlist_confirm' %}">{% csrf_token %}
+      <button class="btn btn-success" {% if not importable or not semester or not policy %}disabled{% endif %}>Import {{ importable }} instructor{{ importable|pluralize }}</button>
+    </form>
+  </div>
+</div></div>
+
+<div class="card"><div class="card-body"><div class="table-responsive">
+  <table class="table table-sm datatable" data-page-length="25">
+    <thead><tr><th>Line</th><th>Username</th><th>Name</th><th>Status</th><th>Problems</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr class="{% if r.status == 'error' %}table-danger{% endif %}">
+        <td>{{ r.line }}</td>
+        <td class="mono">{{ r.data.username }}</td>
+        <td>{{ r.data.last_name }}, {{ r.data.first_name }} {{ r.data.middle_name }} {{ r.data.extension_name }}</td>
+        <td>{% if r.status == 'new' %}<span class="badge text-bg-success">New</span>{% elif r.status == 'existing' %}<span class="badge text-bg-primary">Existing</span>{% else %}<span class="badge text-bg-danger">Error</span>{% endif %}</td>
+        <td class="small">{{ r.errors|join:"; " }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div></div>
+{% endblock %}
