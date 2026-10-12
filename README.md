@@ -19,7 +19,7 @@ Django 5 web app that controls instructor Wi-Fi access through a MikroTik Hotspo
 python -m venv env                  # (an env\ folder already exists in this repo checkout)
 env\Scripts\activate
 pip install -r requirements.txt     # or: pipenv install
-copy .env.example .env              # then edit .env
+copy .env.example .env              # then edit .env (create the PostgreSQL database first: see "Create the PostgreSQL database" below)
 python manage.py migrate
 python manage.py seed_demo
 python manage.py runserver 0.0.0.0:8000
@@ -40,18 +40,79 @@ Open <http://127.0.0.1:8000/> → staff login at `/accounts/login/` (`admin` / t
 | `PORTAL_BASE_URL` | `http://192.168.88.5` (add `:8088` or another free port if port 80 is used by another app) – the services, the firewall rule, CSRF trust and the router's `login.html` redirect all follow it. |
 | `SEED_ADMIN_PASSWORD` | Password given to the `admin` user by `seed_demo`. |
 
-### Database notes (already on PostgreSQL)
+### Create the PostgreSQL database
 
-The original SQLite file `db.sqlite3` is kept as a backup. If you ever need to redo the move:
-`DATABASE_URL=sqlite:///db.sqlite3 python manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.permission -e sessions -e admin.logentry -o dump.json`, point `.env` at PostgreSQL, `migrate`, then `loaddata dump.json`.
+Do this once on the PC that runs the portal (before `python manage.py migrate`). You need PostgreSQL 15 or newer installed
+(from <https://www.enterprisedb.com/downloads/postgres-postgresql-downloads>; keep the defaults, port `5432`) and the password of its
+`postgres` superuser, which you chose during the installation.
 
-(Original instructions for switching from SQLite:)
+**1. Open the PostgreSQL shell** as the superuser (`psql` is in `C:\Program Files\PostgreSQL\<version>\bin`):
 
-1. Create the database (`createdb cdk_portal` or pgAdmin).
-2. Set `DATABASE_URL=postgres://postgres:YOURPASSWORD@localhost:5432/cdk_portal` in `.env`.
-3. `python manage.py migrate` and `python manage.py seed_demo` (or `dumpdata`/`loaddata` to move existing data).
+```powershell
+$env:Path += ";C:\Program Files\PostgreSQL\17\bin"      # change 17 to your version; only needed if "psql" is not recognised
+psql -U postgres -h 127.0.0.1 -p 5432
+```
 
-No code changes are needed; the models use no database-specific features.
+It asks for the `postgres` password and shows `postgres=#`. (`\q` quits, `\du` lists users, `\l` lists databases.)
+
+**2. Create the portal's own database user and database.** Run these inside the shell, with a password of your own
+(letters and digits only, so it needs no escaping in `.env`):
+
+```sql
+CREATE ROLE cdk_app LOGIN PASSWORD 'CHOOSE_A_PASSWORD';
+CREATE DATABASE cdk_portal OWNER cdk_app ENCODING 'UTF8';
+\q
+```
+
+*Or in one go, without entering the shell:*
+
+```powershell
+$env:PGPASSWORD = "POSTGRES_SUPERUSER_PASSWORD"
+psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE ROLE cdk_app LOGIN PASSWORD 'CHOOSE_A_PASSWORD';"
+psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE cdk_portal OWNER cdk_app ENCODING 'UTF8';"
+$env:PGPASSWORD = $null
+```
+
+The portal never connects as `postgres`; it only uses `cdk_app`. (To run the automated tests on a development PC, also run
+`ALTER ROLE cdk_app CREATEDB;`. Not needed in production.)
+
+**3. Check that the new login works:**
+
+```powershell
+psql -U cdk_app -h 127.0.0.1 -p 5432 -d cdk_portal
+```
+
+You should get a `cdk_portal=>` prompt (`\q` to leave).
+
+**4. Put it in `.env`:**
+
+```
+DATABASE_URL=postgres://cdk_app:CHOOSE_A_PASSWORD@127.0.0.1:5432/cdk_portal
+```
+
+Use the port of *your* installation (`5432` by default; this development PC uses `5433`). If the password contains special
+characters, URL-escape them (`@` → `%40`, `#` → `%23`, `/` → `%2F`).
+
+**5. Create the tables and the first administrator:**
+
+```powershell
+python manage.py migrate
+python manage.py create_admin          # asks for the admin username and password
+```
+
+(`seed_demo` instead creates demo accounts and fake history; do not run it for a real client.)
+
+**Security:** do not leave the `postgres` superuser on a weak or default password on a PC that other people can reach. Change it with
+`ALTER USER postgres WITH PASSWORD 'a-strong-password';` (inside `psql -U postgres`). If you ever forget it, run
+`scripts\reset_postgres_password.ps1` from an Administrator PowerShell.
+
+**Forgot the `cdk_app` password?** Log in as `postgres` and run `ALTER ROLE cdk_app PASSWORD 'new-password';`, then update `.env` and
+restart the services (`scripts\restart_services.ps1`).
+
+### Moving data from SQLite (only if you started on SQLite)
+
+`DATABASE_URL=sqlite:///db.sqlite3 python manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.permission -e sessions -e admin.logentry -o dump.json`,
+point `.env` at PostgreSQL, `migrate`, then `loaddata dump.json`. The models use no database-specific features, so no code changes are needed.
 
 ## 2. Demo data (`python manage.py seed_demo`, safe to re-run)
 
