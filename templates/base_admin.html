@@ -27,7 +27,7 @@
 
     <div class="sb-heading">People</div>
     <a class="sb-link {% if 'instructor' in ns or 'masterlist' in ns or 'account_toggle' in ns %}active{% endif %}" href="{% url 'adminpanel:instructor_list' %}" title="Instructors"><i class="bi bi-mortarboard"></i><span>Instructors</span>{% if pending_registrations %}<b class="sb-badge" title="{{ pending_registrations }} registration(s) waiting for approval">{{ pending_registrations }}</b>{% endif %}</a>
-    <a class="sb-link {% if 'admin_' in ns %}active{% endif %}" href="{% url 'adminpanel:admin_list' %}" title="Administrators"><i class="bi bi-shield-lock"></i><span>Administrators</span></a>
+    {% if request.user.is_superuser %}<a class="sb-link {% if 'admin_' in ns %}active{% endif %}" href="{% url 'adminpanel:admin_list' %}" title="Staff accounts"><i class="bi bi-shield-lock"></i><span>Staff accounts</span></a>{% endif %}
 
     <div class="sb-heading">Setup</div>
     <a class="sb-link {% if 'semester' in ns or 'sy_' in ns %}active{% endif %}" href="{% url 'adminpanel:semester_list' %}" title="Semesters"><i class="bi bi-calendar3"></i><span>Semesters</span></a>
@@ -53,7 +53,7 @@
     <div class="dropdown ms-auto">
       <button class="user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu">
         <span class="avatar">{{ request.user.username|slice:":2" }}</span>
-        <span class="user-name text-start lh-sm"><span class="d-block fw-semibold small">{{ request.user.username }}</span><span class="d-block text-muted" style="font-size:.72rem">Administrator</span></span>
+        <span class="user-name text-start lh-sm"><span class="d-block fw-semibold small">{{ request.user.username }}</span><span class="d-block text-muted" style="font-size:.72rem">{{ request.user.role_label|default:"Staff" }}</span></span>
         <i class="bi bi-chevron-down small text-muted d-none d-sm-inline"></i>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">

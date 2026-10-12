@@ -97,16 +97,26 @@ class InstructorForm(BootstrapMixin, forms.Form):
 
 
 class AdminAccountForm(BootstrapMixin, forms.ModelForm):
-    password = forms.CharField(required=False, widget=forms.PasswordInput(render_value=False), help_text="Required when adding an admin.")
+    """A person who signs in to /admin-panel/: STAFF (panel only) or SUPERUSER (panel + Django admin)."""
+
+    ROLE_CHOICES = [
+        (User.STAFF, "Staff - manages the portal only (no Django admin)"),
+        (User.SUPERUSER, "Superuser - the portal and the Django admin"),
+    ]
+    role = forms.ChoiceField(choices=ROLE_CHOICES, initial=User.STAFF)
+    password = forms.CharField(required=False, widget=forms.PasswordInput(render_value=False), help_text="Required when adding an account.")
 
     class Meta:
         model = User
         fields = ["username", "first_name", "middle_name", "last_name", "extension_name", "is_active"]
 
+    field_order = ["username", "first_name", "middle_name", "last_name", "extension_name", "role", "password", "is_active"]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._style()
         if self.instance.pk:
+            self.fields["role"].initial = User.SUPERUSER if self.instance.is_superuser else User.STAFF
             self.fields["password"].label = "New password"
             self.fields["password"].help_text = "Leave blank to keep the current password."
 
@@ -119,6 +129,8 @@ class AdminAccountForm(BootstrapMixin, forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.is_admin = True
+        superuser = self.cleaned_data["role"] == User.SUPERUSER
+        user.is_superuser = user.is_staff = superuser   # staff: never any access to Django admin
         pw = self.cleaned_data.get("password")
         if pw:
             user.set_password(pw)

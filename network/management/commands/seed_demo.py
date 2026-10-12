@@ -27,6 +27,7 @@ SAMPLES = [
 # a self-registration still waiting for approval (shows the approval flow in the admin panel)
 PENDING_SAMPLE = ("INS-0011", "Nina", "Dela", "Cruz", "")
 SAMPLE_PASSWORD = "Instructor@123"
+STAFF_PASSWORD = "Staff@12345"
 
 
 class Command(BaseCommand):
@@ -64,6 +65,12 @@ class Command(BaseCommand):
         admin.set_password(settings.SEED_ADMIN_PASSWORD)
         admin.save()
 
+        # a STAFF account (admin panel only, no Django admin) to try the two roles side by side
+        staff, _ = User.objects.get_or_create(username="staff", defaults=dict(first_name="Demo", last_name="Staff"))
+        staff.is_admin, staff.is_staff, staff.is_superuser, staff.is_instructor, staff.is_active = True, False, False, False, True
+        staff.set_password(STAFF_PASSWORD)
+        staff.save()
+
         self._instructor("test", "test123", "Test", "Instructor", "", standard, sem)
 
         for username, first, middle, last, ext in SAMPLES:
@@ -84,7 +91,8 @@ class Command(BaseCommand):
         Instructor.objects.update_or_create(user=puser, defaults=dict(approval_status=Instructor.PENDING))
 
         self.stdout.write(self.style.SUCCESS("Demo data ready."))
-        self.stdout.write("  Admin:        admin / (SEED_ADMIN_PASSWORD from .env)")
+        self.stdout.write("  Superuser:    admin / (SEED_ADMIN_PASSWORD from .env)   - admin panel + Django admin")
+        self.stdout.write(f"  Staff:        staff / {STAFF_PASSWORD}   - admin panel only")
         self.stdout.write("  Test instructor: test / test123")
         self.stdout.write(f"  Sample instructors: INS-0001 .. INS-0010 / {SAMPLE_PASSWORD}")
         self.stdout.write(f"  Pending registration (needs approval): {PENDING_SAMPLE[0]} / {SAMPLE_PASSWORD}")

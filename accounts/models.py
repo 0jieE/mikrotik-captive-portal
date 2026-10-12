@@ -38,6 +38,31 @@ class User(AbstractUser):
         db_table = "user"
         ordering = ["last_name", "first_name"]
 
+    STAFF = "staff"
+    SUPERUSER = "superuser"
+    INSTRUCTOR = "instructor"
+
+    def save(self, *args, **kwargs):
+        # A superuser always works in the admin panel and may open Django admin (which needs is_staff).
+        if self.is_superuser:
+            self.is_admin = self.is_staff = True
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"is_admin", "is_staff"}
+        super().save(*args, **kwargs)
+
+    @property
+    def role(self):
+        """superuser = admin panel + Django admin; staff = admin panel only; instructor = Wi-Fi portal."""
+        if self.is_superuser:
+            return self.SUPERUSER
+        if self.is_admin:
+            return self.STAFF
+        return self.INSTRUCTOR if self.is_instructor else ""
+
+    @property
+    def role_label(self):
+        return {"superuser": "Superuser", "staff": "Staff", "instructor": "Instructor"}.get(self.role, "")
+
     def get_full_name(self):
         """'Last, First M. Ext' style used across the UI."""
         parts = f"{self.last_name}, {self.first_name}".strip(", ")

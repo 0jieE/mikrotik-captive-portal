@@ -34,6 +34,10 @@ def home_for(user):
 admin_required = _role_required(
     lambda u: u.is_active and u.is_admin, "/accounts/login/", home_for
 )
+# Managing staff / superuser accounts: superusers only (a staff member must not be able to promote anyone).
+superuser_required = _role_required(
+    lambda u: u.is_active and u.is_admin and u.is_superuser, "/accounts/login/", home_for
+)
 instructor_required = _role_required(
     lambda u: u.is_active and u.is_instructor and not u.is_admin, "/portal/login/", home_for
 )

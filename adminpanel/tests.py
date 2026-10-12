@@ -29,6 +29,9 @@ class AdminTestCase(BaseTestCase):
 
 class PagesRenderTests(AdminTestCase):
     def test_every_admin_page_renders(self):
+        self.client.logout()
+        self.make_admin("root", is_superuser=True)  # the Staff accounts pages are for superusers
+        self.client.login(username="root", password=PASSWORD)
         self.connect()
         self.router.add_traffic("s1", bytes_out=5 * MB)
         pages = [
@@ -229,15 +232,113 @@ class MasterlistViewTests(AdminTestCase):
 
 
 class AdminAccountTests(AdminTestCase):
-    def test_add_admin(self):
-        r = self.client.post(reverse("adminpanel:admin_add"), {"username": "second", "password": "Secret-123", "is_active": "on"})
+    """Staff accounts: panel only. Superusers: panel + Django admin. Only superusers manage these accounts."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin.is_superuser = True  # "boss" is a superuser in this class (save() also sets is_staff)
+        self.admin.save()
+
+    def test_add_staff_account_has_no_django_admin_access(self):
+        r = self.client.post(reverse("adminpanel:admin_add"), {"username": "second", "password": "Secret-123", "role": "staff", "is_active": "on"})
         self.assertEqual(r.status_code, 302)
         u = User.objects.get(username="second")
         self.assertTrue(u.is_admin and u.check_password("Secret-123"))
+        self.assertFalse(u.is_superuser or u.is_staff)
+        self.assertEqual(u.role, "staff")
+        self.assertTrue(u.must_change_password)  # new accounts must pick their own password first
+        User.objects.filter(pk=u.pk).update(must_change_password=False)
+        self.client.logout()
+        self.client.login(username="second", password="Secret-123")
+        self.assertEqual(self.client.get(reverse("adminpanel:dashboard")).status_code, 200)
+        self.assertEqual(self.client.get("/django-admin/").status_code, 302)  # sent away from Django admin
+
+    def test_add_superuser_account_can_use_both(self):
+        self.client.post(reverse("adminpanel:admin_add"), {"username": "chief", "password": "Secret-123", "role": "superuser", "is_active": "on"})
+        u = User.objects.get(username="chief")
+        self.assertTrue(u.is_admin and u.is_superuser and u.is_staff)
+        self.assertEqual(u.role, "superuser")
+        User.objects.filter(pk=u.pk).update(must_change_password=False)
+        self.client.logout()
+        self.client.login(username="chief", password="Secret-123")
+        self.assertEqual(self.client.get(reverse("adminpanel:dashboard")).status_code, 200)
+        self.assertEqual(self.client.get("/django-admin/").status_code, 200)
 
     def test_add_admin_requires_password(self):
-        r = self.client.post(reverse("adminpanel:admin_add"), {"username": "second", "is_active": "on"})
+        r = self.client.post(reverse("adminpanel:admin_add"), {"username": "second", "role": "staff", "is_active": "on"})
         self.assertContains(r, "password is required")
+
+    def test_role_is_required_and_validated(self):
+        r = self.client.post(reverse("adminpanel:admin_add"), {"username": "second", "password": "Secret-123", "role": "root", "is_active": "on"})
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(User.objects.filter(username="second").exists())
+
+    def test_staff_cannot_manage_accounts(self):
+        staff = self.make_admin("worker")
+        other = self.make_admin("other")
+        self.client.logout()
+        self.client.login(username="worker", password=PASSWORD)
+        for name, args in [("adminpanel:admin_list", []), ("adminpanel:admin_add", []), ("adminpanel:admin_edit", [other.pk])]:
+            r = self.client.get(reverse(name, args=args))
+            self.assertEqual(r.status_code, 302, name)
+            self.assertIn("/admin-panel/", r["Location"], name)
+        r = self.client.post(reverse("adminpanel:admin_add"), {"username": "sneaky", "password": "Secret-123", "role": "superuser", "is_active": "on"})
+        self.assertFalse(User.objects.filter(username="sneaky").exists())
+        self.client.post(reverse("adminpanel:admin_toggle_active", args=[other.pk]))
+        other.refresh_from_db()
+        self.assertTrue(other.is_active)
+        # ... and they cannot promote themself either
+        self.client.post(reverse("adminpanel:admin_edit", args=[staff.pk]), {"username": "worker", "role": "superuser", "is_active": "on"})
+        staff.refresh_from_db()
+        self.assertFalse(staff.is_superuser)
+
+    def test_staff_still_use_the_portal_pages_but_do_not_see_the_accounts_link(self):
+        self.make_admin("worker")
+        self.client.logout()
+        self.client.login(username="worker", password=PASSWORD)
+        page = self.client.get(reverse("adminpanel:dashboard"))
+        self.assertContains(page, "Staff")
+        self.assertNotContains(page, reverse("adminpanel:admin_list"))
+        for name in ("adminpanel:instructor_list", "adminpanel:policy_list", "adminpanel:semester_list", "adminpanel:reports", "adminpanel:monitoring"):
+            self.assertEqual(self.client.get(reverse(name)).status_code, 200, name)
+
+    def test_superuser_sees_the_accounts_link_and_django_admin_link(self):
+        page = self.client.get(reverse("adminpanel:dashboard"))
+        self.assertContains(page, reverse("adminpanel:admin_list"))
+        self.assertContains(page, "/django-admin/")
+        self.assertContains(page, "Superuser")
+
+    def test_edit_can_change_staff_to_superuser_and_back(self):
+        staff = self.make_admin("worker")
+        url = reverse("adminpanel:admin_edit", args=[staff.pk])
+        self.client.post(url, {"username": "worker", "role": "superuser", "is_active": "on"})
+        staff.refresh_from_db()
+        self.assertTrue(staff.is_superuser and staff.is_staff)
+        self.client.post(url, {"username": "worker", "role": "staff", "is_active": "on"})
+        staff.refresh_from_db()
+        self.assertFalse(staff.is_superuser or staff.is_staff)
+        self.assertTrue(staff.is_admin)  # still a staff member of the portal
+
+    def test_cannot_remove_your_own_superuser_role(self):
+        self.make_admin("chief", is_superuser=True)
+        r = self.client.post(reverse("adminpanel:admin_edit", args=[self.admin.pk]), {"username": "boss", "role": "staff", "is_active": "on"})
+        self.assertContains(r, "cannot remove your own superuser role")
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_superuser)
+
+    def test_cannot_demote_or_deactivate_the_last_superuser(self):
+        from adminpanel.views_admins import deactivation_block_reason, demotion_block_reason
+
+        chief = self.make_admin("chief", is_superuser=True)
+        self.client.logout()
+        self.client.login(username="chief", password=PASSWORD)
+        # chief demotes boss: allowed, because chief remains a superuser
+        self.client.post(reverse("adminpanel:admin_edit", args=[self.admin.pk]), {"username": "boss", "role": "staff", "is_active": "on"})
+        self.admin.refresh_from_db()
+        self.assertFalse(self.admin.is_superuser)
+        # chief is now the only superuser: nobody may demote or deactivate them
+        self.assertIn("at least one active superuser", demotion_block_reason(self.admin, chief, "staff"))
+        self.assertIn("last active", deactivation_block_reason(self.admin, chief))
 
     def test_cannot_deactivate_self(self):
         self.make_admin("other")
@@ -245,13 +346,13 @@ class AdminAccountTests(AdminTestCase):
         self.admin.refresh_from_db()
         self.assertTrue(self.admin.is_active)
 
-    def test_cannot_deactivate_last_active_admin(self):
-        other = self.make_admin("other")
+    def test_cannot_deactivate_last_active_account(self):
+        other = self.make_admin("other", is_superuser=True)
         self.client.post(reverse("adminpanel:admin_toggle_active", args=[other.pk]))  # fine: boss is still active
         other.refresh_from_db()
         self.assertFalse(other.is_active)
-        # now boss is the only active admin; another admin session cannot deactivate boss either:
-        third = self.make_admin("third")
+        # now boss is the only active superuser; a second superuser can deactivate boss, but not the last one afterwards
+        third = self.make_admin("third", is_superuser=True)
         self.client.logout()
         self.client.login(username="third", password=PASSWORD)
         self.client.post(reverse("adminpanel:admin_toggle_active", args=[self.admin.pk]))  # boss: third still active -> allowed
@@ -264,13 +365,19 @@ class AdminAccountTests(AdminTestCase):
 
     def test_edit_form_cannot_deactivate_self(self):
         self.make_admin("other")
-        r = self.client.post(reverse("adminpanel:admin_edit", args=[self.admin.pk]), {"username": "boss"})  # is_active omitted
+        r = self.client.post(reverse("adminpanel:admin_edit", args=[self.admin.pk]), {"username": "boss", "role": "superuser"})  # is_active omitted
         self.assertContains(r, "cannot deactivate your own account")
         self.admin.refresh_from_db()
         self.assertTrue(self.admin.is_active)
 
     def test_instructors_are_not_listed_as_admins(self):
         self.assertNotContains(self.client.get(reverse("adminpanel:admin_list")), 'class="mono">s1')
+
+    def test_list_shows_the_role_of_each_account(self):
+        self.make_admin("worker")
+        page = self.client.get(reverse("adminpanel:admin_list"))
+        self.assertContains(page, "Superuser")
+        self.assertContains(page, "Staff")
 
 
 class SemesterAdminTests(AdminTestCase):

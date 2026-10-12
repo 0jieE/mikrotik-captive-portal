@@ -118,13 +118,24 @@ Phone ─► open SSID ─► router redirects to hotspot login.html
 * If the router is unreachable, pages show a friendly message; admin actions still save in Django and are
   reconciled by `sync_router` / `sync_sessions` when it returns.
 
+### Who can do what (roles)
+
+| Role | Wi-Fi portal | Admin panel (instructors, policies, semesters, monitoring, reports, logs) | Staff accounts page | Django admin (`/django-admin/`) |
+|---|---|---|---|---|
+| **Instructor** | yes | no | no | no |
+| **Staff** | no | **yes** | no | no |
+| **Superuser** | no | **yes** | **yes** (adds/edits staff and superusers) | **yes** |
+
+The first account made with `manage.py create_admin` is a superuser. Superusers add staff (or more superusers) under **Staff accounts**.
+The system never lets you remove your own superuser role, or deactivate or demote the last active superuser.
+
 ### Admin panel map
 
 | Area | URL |
 |---|---|
 | Dashboard (live cards, 7-day chart, recent logs) | `/admin-panel/` |
 | Instructors — list/filters/bulk, add/edit/view, reset password, policy, masterlist import | `/admin-panel/instructors/` |
-| Administrators (cannot deactivate yourself or the last active admin) | `/admin-panel/admins/` |
+| Staff accounts (superusers only; you cannot deactivate yourself or the last superuser) | `/admin-panel/admins/` |
 | School years & semesters ("Set active" confirmation modal) | `/admin-panel/semesters/` |
 | Bandwidth policies + "Sync to router" status | `/admin-panel/policies/` |
 | Live monitoring (HTMX every 5 s, Kick) | `/admin-panel/monitoring/` |

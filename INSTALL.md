@@ -176,7 +176,10 @@ env\Scripts\python.exe manage.py migrate
 env\Scripts\python.exe manage.py create_admin --username admin
 ```
 The first command prints a list of lines ending with `OK`. The second asks you to **type a password twice** (at least 8
-characters). This is the password for signing in to the admin panel. Write it down.
+characters). Write it down.
+
+This first account is a **superuser**: it can use the admin panel **and** the Django admin. Staff accounts (admin panel only)
+are added later by a superuser in the admin panel, under **Staff accounts**.
 
 ---
 

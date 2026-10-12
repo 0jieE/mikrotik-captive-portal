@@ -175,7 +175,7 @@ env\Scripts\python.exe manage.py migrate
 env\Scripts\python.exe manage.py create_admin --username admin
 ```
 
-`create_admin` asks for a password (min. 8 characters). **Use this command, not `createsuperuser`** — only `create_admin` sets the flag that lets an account into `/admin-panel/`.
+`create_admin` asks for a password (min. 8 characters). The account it creates is a **superuser** (admin panel + Django admin). Later, a superuser adds **staff** accounts in the admin panel (*Staff accounts* in the sidebar): staff manage the portal but cannot open the Django admin. To create a staff account from the command line instead: `manage.py create_admin --username <name> --staff`.
 Running it again for the same username resets that admin's password (handy if the client forgets it).
 
 > **Do not run `seed_demo` for a client.** It creates demo instructors and the `test` / `test123` login.
@@ -368,7 +368,7 @@ Run `backup_db.ps1` on the old PC, do steps 1–9 on the new PC **except** creat
 | `DisallowedHost` / Bad Request (400) | The address you typed isn't in `ALLOWED_HOSTS`. Add it, then restart CDKPortal. |
 | Changes don't show up / odd 500 errors after an update | An old worker is still running. Run `scripts\restart_services.ps1` and check it ends with `RESTART OK`. (Don't rely on a bare `nssm restart`: Windows refuses it silently while another service depends on the one being restarted.) |
 | Service won't start | Read `logs\CDKPortal.err.log`. Common: wrong `DATABASE_URL`, PostgreSQL stopped, or the port is already used by another program (IIS/Apache/Docker/another web app). Pick a free port - see "Changing the portal port" below. |
-| Admin can't enter the panel | The account was made with `createsuperuser`. Run `manage.py create_admin --username <name>`. |
+| Staff member can't open `/django-admin/` | By design: only superusers can. Ask a superuser to change their role under *Staff accounts*. |
 | Everyone suddenly "no active semester" | No semester is active. **Semesters → Set active.** |
 
 ---

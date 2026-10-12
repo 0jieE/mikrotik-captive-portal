@@ -29,6 +29,28 @@ class NoEmailTests(BaseTestCase):
         call_command("create_admin", "--username", "boss2", "--password", "Str0ng-pass!", stdout=StringIO())
         self.assertTrue(User.objects.get(username="boss2").is_admin)
 
+    def test_create_admin_defaults_to_a_superuser_and_staff_flag_makes_a_staff_account(self):
+        call_command("create_admin", "--username", "chief2", "--password", "Str0ng-pass!", stdout=StringIO())
+        chief = User.objects.get(username="chief2")
+        self.assertTrue(chief.is_admin and chief.is_superuser and chief.is_staff)
+        self.assertEqual(chief.role, "superuser")
+        call_command("create_admin", "--username", "worker2", "--password", "Str0ng-pass!", "--staff", stdout=StringIO())
+        worker = User.objects.get(username="worker2")
+        self.assertTrue(worker.is_admin)
+        self.assertFalse(worker.is_superuser or worker.is_staff)
+        self.assertEqual(worker.role, "staff")
+
+    def test_roles_and_the_superuser_invariant(self):
+        self.assertEqual(User.objects.create_user("i1", password="pw-12345", is_instructor=True).role, "instructor")
+        self.assertEqual(User.objects.create_user("s9", password="pw-12345", is_admin=True).role, "staff")
+        plain = User.objects.create_user("p1", password="pw-12345")
+        plain.is_superuser = True
+        plain.save(update_fields=["is_superuser"])  # e.g. toggled in Django admin: the portal flags follow
+        plain.refresh_from_db()
+        self.assertTrue(plain.is_admin and plain.is_staff)
+        self.assertEqual(plain.role, "superuser")
+        self.assertEqual(User.objects.create_superuser("root9", password="pw-12345").is_admin, True)  # createsuperuser works in the panel too
+
     def test_model_validation_works_without_email(self):
         User(username="valid1").full_clean(exclude=["password"])
 
@@ -40,7 +62,7 @@ class NoEmailTests(BaseTestCase):
         self.assertEqual(self.client.get("/django-admin/accounts/user/%d/change/" % User.objects.get(username="root3").pk).status_code, 200)
 
     def test_admin_account_form_has_no_email(self):
-        self.make_admin("boss")
+        self.make_admin("boss", is_superuser=True)
         self.client.login(username="boss", password=PASSWORD)
         r = self.client.get(reverse("adminpanel:admin_add"))
         self.assertNotContains(r, "Email")
