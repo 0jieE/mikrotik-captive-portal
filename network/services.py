@@ -222,10 +222,24 @@ def _fake_mac_for(ip: str) -> str:
 def resolve_device(router, mac: str, ip: str, peer_ip: str | None) -> tuple[str, str]:
     """Decide which device to log in. The ?mac=&ip= values come from the browser, so they are not trusted:
     on a real router the IP must be the requester's own address and the MAC is what the router's host table
-    says for that IP (the posted MAC is used only when the router has no entry)."""
+    says for that IP (the posted MAC is used only when the router has no entry).
+
+    One exception: the router sometimes rewrites the source address of the phone's request to its own address
+    (192.168.88.1), so the portal sees the router and not the phone. That address is not a hotspot host, so it
+    cannot be a device to log in. Then the IP the router itself put in the login form is used, but only if the
+    router's host table really lists it (and gives its MAC)."""
     mac = (mac or "").strip().upper().replace("-", ":")
     ip = (ip or "").strip()
-    if peer_ip and (not router.is_mock or not ip):
+    if router.is_mock:
+        if peer_ip and not ip:
+            ip = peer_ip
+    elif peer_ip:
+        peer_mac = (router.host_lookup(peer_ip) or "").upper()
+        if MAC_RE.match(peer_mac):
+            return peer_mac, peer_ip
+        posted_mac = (router.host_lookup(ip) or "").upper() if ip and ip != peer_ip else ""
+        if MAC_RE.match(posted_mac):
+            return posted_mac, ip
         ip = peer_ip
     if ip:
         known = (router.host_lookup(ip) or "").upper()
@@ -264,6 +278,8 @@ def connect_instructor(user, mac: str, ip: str, peer_ip: str | None = None) -> C
             entry = next((a for a in r.active_sessions() if a["user"] == username), None)
     except RouterError as e:
         audit(None, "login.router_error", username, {"error": str(e)}, actor=user)
+        if "unknown host" in str(e).lower():  # the router answered, it just does not know this device (yet)
+            return ConnectResult(False, "Could not detect your device. Reconnect to the Wi-Fi and try again.", "no_mac")
         return ConnectResult(
             False, "The network controller is not responding right now. Please try again in a moment.", "router_error"
         )

@@ -394,6 +394,36 @@ class ResolveDeviceTests(BaseTestCase):
         mac, ip = resolve_device(r, "BB:BB:BB:BB:BB:99", "192.168.88.99", peer_ip="192.168.88.20")  # spoofed victim
         self.assertEqual((mac, ip), ("AA:AA:AA:AA:AA:20", "192.168.88.20"))
 
+    def test_router_rewritten_source_address_falls_back_to_the_ip_the_router_posted(self):
+        """The portal sometimes sees 192.168.88.1 (the router) as the requester: use the host the router listed in the form."""
+        from network.services import resolve_device
+
+        r = self.FakeReal({"192.168.88.242": "1E:EB:B1:8B:19:98"})
+        self.assertEqual(resolve_device(r, "", "192.168.88.242", peer_ip="192.168.88.1"), ("1E:EB:B1:8B:19:98", "192.168.88.242"))
+
+    def test_a_known_requester_still_cannot_pose_as_another_host(self):
+        from network.services import resolve_device
+
+        r = self.FakeReal({"192.168.88.20": "AA:AA:AA:AA:AA:20", "192.168.88.99": "BB:BB:BB:BB:BB:99"})
+        self.assertEqual(resolve_device(r, "", "192.168.88.99", peer_ip="192.168.88.20"), ("AA:AA:AA:AA:AA:20", "192.168.88.20"))
+
+    def test_unlisted_requester_and_unlisted_posted_ip_is_rejected(self):
+        from network.services import resolve_device
+
+        mac, ip = resolve_device(self.FakeReal({}), "", "192.168.88.242", peer_ip="192.168.88.1")
+        self.assertEqual(mac, "")
+
+    def test_unknown_host_error_is_reported_as_device_not_detected(self):
+        from unittest import mock
+
+        from network.mikrotik import RouterError
+
+        self.basic_setup()
+        with mock.patch("network.mikrotik.MockMikroTik.login_device", side_effect=RouterError("Router rejected the command: unknown host IP 192.168.88.1")):
+            res = connect_instructor(self.instructor.user, "", "127.0.0.1", peer_ip="127.0.0.1")
+        self.assertFalse(res.success)
+        self.assertEqual(res.code, "no_mac")
+
     def test_router_host_table_wins_over_posted_mac(self):
         from network.services import resolve_device
 
