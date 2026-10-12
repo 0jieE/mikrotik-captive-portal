@@ -31,7 +31,7 @@ The Windows PC is the "server". It must stay on, and always have the same IP add
 | 1 | **Windows 10 / 11, 64-bit** | any current | You need an **Administrator** account. |
 | 2 | **Python** | 3.10 or newer (**3.13 tested**) | python.org installer. Tick **"Add python.exe to PATH"** and choose **"Install for all users"** (Customize installation → Advanced → *Install Python for all users*). Needed because the services run as a system account. |
 | 3 | **PostgreSQL** | 15 or newer (**17 tested**) | EnterpriseDB installer. Installs the server and `psql`. Keep the defaults (port **5432**). **Write down the `postgres` superuser password you choose.** pgAdmin is optional. |
-| 4 | *(downloaded automatically)* **NSSM 2.24** | – | `scripts\install_services.ps1` downloads it and verifies its checksum. Needs internet once. |
+| 4 | *(included)* **NSSM 2.24** | – | The service tool ships inside the project as `tools\nssm.exe`; nothing to install. (If that file is ever missing, `scripts\install_services.ps1` tries to download it from nssm.cc, which is sometimes down - then copy `nssm.exe` into `tools\` by hand.) |
 
 That's all (**Git for Windows** is optional: it makes installing and updating from GitHub one command; without it use "Download ZIP"). **Not needed:** Docker, Node.js, Visual Studio, any web server, any CDN or internet access for instructors to see the login page (all Bootstrap/HTMX/Chart.js files ship inside the project).
 

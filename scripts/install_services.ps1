@@ -21,7 +21,7 @@ foreach ($f in $py, $waitress) {
     if (-not (Test-Path $f)) { throw "Missing $f - create the virtual environment first (see docs\DEPLOYMENT_GUIDE.md, step 5)." }
 }
 if (-not (Test-Path $nssm)) {
-    Write-Host "NSSM not found - downloading nssm 2.24 ..."
+    Write-Host "tools\nssm.exe is missing (it normally ships with the project) - downloading nssm 2.24 ..."
     $zip = Join-Path $env:TEMP "nssm-2.24.zip"
     $expected = "727D1E42275C605E0F04ABA98095C38A8E1E46DEF453CDFFCE42869428AA6743"
     Invoke-WebRequest -Uri "https://nssm.cc/release/nssm-2.24.zip" -OutFile $zip -UseBasicParsing -TimeoutSec 60

@@ -21,7 +21,7 @@ $excludeFiles = @(".env", "db.sqlite3", ".mock_router.json", "SEEDED_CREDENTIALS
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
 # keep an empty staticfiles dir (silences a harmless WhiteNoise warning) and tools\ placeholder
 New-Item -ItemType Directory -Force (Join-Path $stage "$name\staticfiles"), (Join-Path $stage "$name\tools") | Out-Null
-Set-Content (Join-Path $stage "$name\tools\README.txt") "nssm.exe is downloaded automatically by scripts\install_services.ps1 (SHA-256 verified)."
+Set-Content (Join-Path $stage "$name\tools\README.txt") "nssm.exe is downloaded automatically by scripts\install_services.ps1 (SHA-256 verified). If nssm.cc is down, copy nssm.exe (NSSM 2.24, win64) into this folder."
 
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage $name) -DestinationPath $zip -CompressionLevel Optimal
