@@ -10,39 +10,15 @@ Django 5 web app that controls instructor Wi-Fi access through a MikroTik Hotspo
 
 ---
 
-> **Installing on a client's PC?** Follow **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** (what to install, step-by-step setup, services, backups, updates, troubleshooting). The section below is the quick developer setup.
+> **Installing on a client's PC?** Follow **[INSTALL.md](INSTALL.md)** (just the installation steps). For backups, updates and troubleshooting see **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**.
 
-## 1. First-time setup on a new PC (Windows 10/11) - follow in this order
+## 1. Installing
 
-**Install first** (once): **Python 3.13** (tick *Add python.exe to PATH*) and **PostgreSQL 17**
-(<https://www.enterprisedb.com/downloads/postgres-postgresql-downloads>; keep the defaults and **write down the password you
-choose for the `postgres` user**).
+**See [INSTALL.md](INSTALL.md)** - a step-by-step guide (about 12 short steps) for putting the system on a new Windows PC,
+including the database, the router and the Windows services.
 
-Then open PowerShell **in the project folder** and run the steps one after the other:
-
-```powershell
-# 1. Python environment
-python -m venv env
-env\Scripts\python.exe -m pip install -r requirements.txt
-
-# 2. Database - ONE command. It asks for the postgres password, then creates the database + its user
-#    and writes DATABASE_URL (and a SECRET_KEY) into .env for you. (Details below.)
-powershell -ExecutionPolicy Bypass -File scripts\setup_database.ps1
-
-# 3. Create the tables, then the first administrator (it asks for a username and password)
-env\Scripts\python.exe manage.py migrate
-env\Scripts\python.exe manage.py create_admin
-
-# 4. Try it
-env\Scripts\python.exe manage.py runserver 0.0.0.0:8000
-```
-
-Open <http://127.0.0.1:8000/> and sign in at `/accounts/login/` with the administrator you just created.
-The database must exist **before** step 3 - that is what step 2 does. (For demo accounts and fake history on a development
-PC, run `env\Scripts\python.exe manage.py seed_demo` after `migrate`; never for a real client.)
-
-For the client's router, address and services, finish with `.env` (below) and
-[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).
+For developers on a PC that is already set up: `env\Scripts\python.exe manage.py runserver 0.0.0.0:8000`
+(demo accounts: `manage.py seed_demo`).
 
 ### `.env`
 
@@ -56,40 +32,6 @@ For the client's router, address and services, finish with `.env` (below) and
 | `MIKROTIK_MOCK` | `True` = fake router (state in `.mock_router.json`) so everything runs without hardware. **`False` for the real router.** |
 | `PORTAL_BASE_URL` | `http://192.168.88.5` (add `:8088` or another free port if port 80 is used by another app) – the services, the firewall rule, CSRF trust and the router's `login.html` redirect all follow it. |
 | `SEED_ADMIN_PASSWORD` | Password given to the `admin` user by `seed_demo`. |
-
-### The database script (`scripts\setup_database.ps1`)
-
-What it does, so nothing is a mystery:
-
-1. finds `psql.exe` and the port PostgreSQL listens on (5432 by default);
-2. asks for the **`postgres` password** (the one chosen when PostgreSQL was installed) and checks that it works;
-3. creates the database user **`cdk_app`** (with a random password that is never shown) and the database **`cdk_portal`**;
-4. checks that the new login works;
-5. creates `.env` from `.env.example` if it is missing and writes the `DATABASE_URL` line (and a new `SECRET_KEY`) into it.
-
-It is safe to run again: an existing database is kept with its data, and the previous `.env` is saved as `.env.before-setup`.
-If it stops, it says why in plain words (PostgreSQL not installed, wrong password, service not running ...). Options:
-`-Port 5433` (if PostgreSQL does not use 5432), `-DbName`, `-AppUser`.
-
-*Wrong or forgotten `postgres` password?* Run `scripts\reset_postgres_password.ps1` from an **Administrator** PowerShell, then run
-the database script again. Do not leave `postgres` on a weak or default password on a PC others can reach; change it with
-`ALTER USER postgres WITH PASSWORD 'a-strong-password';` inside `psql -U postgres`.
-
-<details><summary>Doing it by hand instead (same result)</summary>
-
-```powershell
-$env:Path += ";C:\Program Files\PostgreSQL\17\bin"          # change 17 to your version
-psql -U postgres -h 127.0.0.1 -p 5432                        # asks for the postgres password, shows postgres=#
-```
-```sql
-CREATE ROLE cdk_app LOGIN PASSWORD 'CHOOSE_A_PASSWORD';        -- letters and digits only
-CREATE DATABASE cdk_portal OWNER cdk_app ENCODING 'UTF8' TEMPLATE template0;
-\q
-```
-Then put `DATABASE_URL=postgres://cdk_app:CHOOSE_A_PASSWORD@127.0.0.1:5432/cdk_portal` in `.env` (your port if not 5432; URL-escape
-special characters: `@` = `%40`, `#` = `%23`, `/` = `%2F`). Test it with `psql -U cdk_app -h 127.0.0.1 -p 5432 -d cdk_portal`.
-Forgot the `cdk_app` password? As `postgres`: `ALTER ROLE cdk_app PASSWORD 'new-password';`, update `.env`, run `scripts\restart_services.ps1`.
-</details>
 
 ### Moving data from SQLite (only if you started on SQLite)
 

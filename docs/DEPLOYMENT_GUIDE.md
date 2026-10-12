@@ -1,5 +1,7 @@
 # Deployment guide - installing the CDK Wi-Fi portal on a new Windows PC
 
+> **Only want the installation steps?** Use the short guide: **[INSTALL.md](../INSTALL.md)**. This longer document adds the reasons behind each step, backups, updates and troubleshooting.
+
 Use this when you hand the system to a client (or move it to a new server). Follow the steps in order.
 Everything marked **verified** was actually tested on a clean folder with a brand-new virtual environment
 (install from `requirements.txt`, migrate, create admin, 173 automated tests passing).
