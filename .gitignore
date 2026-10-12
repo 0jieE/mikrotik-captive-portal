@@ -12,7 +12,6 @@ staticfiles/
 .vscode/
 logs/
 backups/
-tools/nssm.exe
 SEEDED_CREDENTIALS.md
 
 # scratch / local-only files
