@@ -64,7 +64,6 @@ class NoEmailTests(BaseTestCase):
     def test_admin_account_form_has_no_email(self):
         self.make_admin("boss", is_superuser=True)
         self.client.login(username="boss", password=PASSWORD)
-        r = self.client.get(reverse("adminpanel:admin_add"))
+        r = self.client.get("/django-admin/accounts/user/add/")
         self.assertNotContains(r, "Email")
         self.assertNotContains(self.client.get(reverse("adminpanel:instructor_add")), "Email")
-        self.assertNotContains(self.client.get(reverse("adminpanel:admin_list")), "Email")

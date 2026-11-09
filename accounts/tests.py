@@ -77,7 +77,7 @@ class StaffLoginTests(BaseTestCase):
 class RbacTests(BaseTestCase):
     ADMIN_URLS = [
         "adminpanel:dashboard", "adminpanel:instructor_list", "adminpanel:instructor_add", "adminpanel:masterlist_upload",
-        "adminpanel:admin_list", "adminpanel:semester_list", "adminpanel:policy_list", "adminpanel:monitoring",
+        "adminpanel:semester_list", "adminpanel:policy_list", "adminpanel:monitoring",
         "adminpanel:monitoring_live", "adminpanel:reports", "adminpanel:audit_logs", "adminpanel:report_csv",
     ]
 

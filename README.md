@@ -120,13 +120,13 @@ Phone ─► open SSID ─► router redirects to hotspot login.html
 
 ### Who can do what (roles)
 
-| Role | Wi-Fi portal | Admin panel (instructors, policies, semesters, monitoring, reports, logs) | Admin accounts page | Django admin (`/django-admin/`) |
+| Role | Wi-Fi portal | Admin panel (instructors, policies, semesters, monitoring, reports, logs) | Creates admin / superuser accounts | Django admin (`/django-admin/`) |
 |---|---|---|---|---|
 | **Instructor** | yes | no | no | no |
 | **Admin** (portal admin) | no | **yes** | no | no |
 | **Superuser** | no | **yes** | **yes** (adds/edits admins and superusers) | **yes** |
 
-The first account made with `manage.py create_admin` is a superuser. Superusers add admins (or more superusers) under **Admin accounts**.
+The first account made with `manage.py create_admin` is a superuser. Superusers add admins (or more superusers) in the Django admin: *Users → Add user*, then choose the role.
 The system never lets you remove your own superuser role, or deactivate or demote the last active superuser.
 
 ### Admin panel map
@@ -135,7 +135,6 @@ The system never lets you remove your own superuser role, or deactivate or demot
 |---|---|
 | Dashboard (live cards, 7-day chart, recent logs) | `/admin-panel/` |
 | Instructors — list/filters/bulk, add/edit/view, reset password, policy, masterlist import | `/admin-panel/instructors/` |
-| Admin accounts (superusers only; you cannot deactivate yourself or the last superuser) | `/admin-panel/admins/` |
 | School years & semesters ("Set active" confirmation modal) | `/admin-panel/semesters/` |
 | Bandwidth policies + "Sync to router" status | `/admin-panel/policies/` |
 | Live monitoring (HTMX every 5 s, Kick) | `/admin-panel/monitoring/` |

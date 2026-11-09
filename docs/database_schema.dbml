@@ -64,7 +64,7 @@ Table user [headercolor: #17603a] {
   id                   bigint       [pk, increment]
   password             varchar(128) [not null, note: 'Django-hashed (PBKDF2)']
   last_login           timestamptz  [null]
-  is_superuser         boolean      [not null, default: false, note: 'superuser role: admin panel + /django-admin/ + manages admin accounts']
+  is_superuser         boolean      [not null, default: false, note: 'superuser role: admin panel + /django-admin/ (the only place admin accounts are created)']
   username             varchar(150) [not null, unique, note: 'what an instructor signs in to the Wi-Fi portal with']
   first_name           varchar(150) [not null, default: '']
   last_name            varchar(150) [not null, default: '']

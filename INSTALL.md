@@ -179,7 +179,7 @@ The first command prints a list of lines ending with `OK`. The second asks you t
 characters). Write it down.
 
 This first account is a **superuser**: it can use the admin panel **and** the Django admin. Admin accounts (portal admins: admin panel only)
-are added later by a superuser in the admin panel, under **Admin accounts**.
+are added later by a superuser in the **Django admin** (menu at the top right → *Django admin* → *Users* → *Add user*).
 
 ---
 

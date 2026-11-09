@@ -19,7 +19,7 @@
       <a href="#instructors">Instructors</a>
       <a href="#daily">Daily work</a>
       <a href="#switch">Changing semesters</a>
-      <a href="#staff">Admin accounts</a>
+      <a href="#staff">Admin &amp; superuser accounts</a>
       <a href="#trouble">Problems &amp; fixes</a>
     </div></nav>
   </div>
@@ -61,7 +61,7 @@
           <tbody>
             <tr><td><strong>Instructor</strong></td><td>Wi-Fi sign-in page</td><td>Go online, see own dashboard and history, change own password.</td></tr>
             <tr><td><strong>Admin</strong> <span class="text-muted small">(portal admin)</span></td><td>Admin login</td><td>Everything in this admin panel: instructors, semesters, plans, monitoring, reports, logs. No Django admin.</td></tr>
-            <tr><td><strong>Superuser</strong></td><td>Admin login</td><td>Everything an admin can, plus <strong>Admin accounts</strong> (adding admins and superusers) and the Django admin.</td></tr>
+            <tr><td><strong>Superuser</strong></td><td>Admin login</td><td>Everything an admin can, plus the Django admin, where only superusers create admin and superuser accounts.</td></tr>
           </tbody>
         </table>
       </div>
@@ -136,9 +136,14 @@
     <div class="card mb-3" id="staff"><div class="card-body manual-section">
       <h3><i class="bi bi-shield-lock"></i>Admin and superuser accounts (superusers only)</h3>
       <ul class="mb-0">
-        <li>On <em>Admin accounts</em>, add the people who run the portal and choose their role: <strong>Admin</strong> (portal admin) or <strong>Superuser</strong>.</li>
-        <li>You cannot deactivate yourself, the last active account, or the last active superuser, and you cannot remove
-          your own superuser role.</li>
+        <li>Only a superuser can add the people who run the portal. Open <strong>Django admin</strong> from the menu at the
+          top right &rarr; <em>Users</em> &rarr; <em>Add user</em>, fill in the username, name and a password, and choose the
+          role: <strong>Admin</strong> (portal admin) or <strong>Superuser</strong>. The new person must choose their own
+          password the first time they sign in.</li>
+        <li>To change a role, deactivate someone, or set a new password, open the person under <em>Users</em> in the Django admin.</li>
+        <li>You cannot deactivate or delete yourself, the last active admin account, or the last active superuser, and you
+          cannot remove your own superuser role.</li>
+        <li>Instructors are not added there - use <em>Instructors</em> in this admin panel.</li>
         <li>Everyone changes their own password from the menu at the top right.</li>
       </ul>
     </div></div>
