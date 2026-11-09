@@ -19,7 +19,7 @@
       <a href="#instructors">Instructors</a>
       <a href="#daily">Daily work</a>
       <a href="#switch">Changing semesters</a>
-      <a href="#staff">Staff accounts</a>
+      <a href="#staff">Admin accounts</a>
       <a href="#trouble">Problems &amp; fixes</a>
     </div></nav>
   </div>
@@ -60,8 +60,8 @@
           <thead><tr><th>Role</th><th>Signs in at</th><th>Can do</th></tr></thead>
           <tbody>
             <tr><td><strong>Instructor</strong></td><td>Wi-Fi sign-in page</td><td>Go online, see own dashboard and history, change own password.</td></tr>
-            <tr><td><strong>Staff</strong></td><td>Staff login</td><td>Everything in this admin panel: instructors, semesters, plans, monitoring, reports, logs.</td></tr>
-            <tr><td><strong>Superuser</strong></td><td>Staff login</td><td>Everything staff can, plus <strong>Staff accounts</strong> and the Django admin.</td></tr>
+            <tr><td><strong>Admin</strong> <span class="text-muted small">(portal admin)</span></td><td>Staff login</td><td>Everything in this admin panel: instructors, semesters, plans, monitoring, reports, logs. No Django admin.</td></tr>
+            <tr><td><strong>Superuser</strong></td><td>Staff login</td><td>Everything an admin can, plus <strong>Staff accounts</strong> (adding admins and superusers) and the Django admin.</td></tr>
           </tbody>
         </table>
       </div>
@@ -134,9 +134,9 @@
     </div></div>
 
     <div class="card mb-3" id="staff"><div class="card-body manual-section">
-      <h3><i class="bi bi-shield-lock"></i>Staff accounts (superusers only)</h3>
+      <h3><i class="bi bi-shield-lock"></i>Admin and superuser accounts (superusers only)</h3>
       <ul class="mb-0">
-        <li>Add people who run the portal and choose <strong>Staff</strong> or <strong>Superuser</strong>.</li>
+        <li>On <em>Staff accounts</em>, add the people who run the portal and choose their role: <strong>Admin</strong> (portal admin) or <strong>Superuser</strong>.</li>
         <li>You cannot deactivate yourself, the last active account, or the last active superuser, and you cannot remove
           your own superuser role.</li>
         <li>Everyone changes their own password from the menu at the top right.</li>
