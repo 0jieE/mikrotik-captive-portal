@@ -30,7 +30,7 @@ class AdminTestCase(BaseTestCase):
 class PagesRenderTests(AdminTestCase):
     def test_every_admin_page_renders(self):
         self.client.logout()
-        self.make_admin("root", is_superuser=True)  # the Staff accounts pages are for superusers
+        self.make_admin("root", is_superuser=True)  # the Admin accounts pages are for superusers
         self.client.login(username="root", password=PASSWORD)
         self.connect()
         self.router.add_traffic("s1", bytes_out=5 * MB)
@@ -297,7 +297,7 @@ class AdminAccountTests(AdminTestCase):
         self.client.logout()
         self.client.login(username="worker", password=PASSWORD)
         page = self.client.get(reverse("adminpanel:dashboard"))
-        self.assertContains(page, "Staff")
+        self.assertContains(page, 'font-size:.72rem">Admin</span>')  # role under the name, top right
         self.assertNotContains(page, reverse("adminpanel:admin_list"))
         for name in ("adminpanel:instructor_list", "adminpanel:policy_list", "adminpanel:semester_list", "adminpanel:reports", "adminpanel:monitoring"):
             self.assertEqual(self.client.get(reverse(name)).status_code, 200, name)
@@ -377,7 +377,7 @@ class AdminAccountTests(AdminTestCase):
         self.make_admin("worker")
         page = self.client.get(reverse("adminpanel:admin_list"))
         self.assertContains(page, "Superuser")
-        self.assertContains(page, "Staff")
+        self.assertContains(page, '<span class="badge text-bg-secondary">Admin</span>')
 
 
 class SemesterAdminTests(AdminTestCase):

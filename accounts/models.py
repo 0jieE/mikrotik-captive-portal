@@ -52,7 +52,7 @@ class User(AbstractUser):
 
     @property
     def role(self):
-        """superuser = admin panel + Django admin; staff = admin panel only; instructor = Wi-Fi portal."""
+        """superuser = admin panel + Django admin; staff (shown as "Admin") = admin panel only; instructor = Wi-Fi portal."""
         if self.is_superuser:
             return self.SUPERUSER
         if self.is_admin:
@@ -61,7 +61,7 @@ class User(AbstractUser):
 
     @property
     def role_label(self):
-        return {"superuser": "Superuser", "staff": "Staff", "instructor": "Instructor"}.get(self.role, "")
+        return {"superuser": "Superuser", "staff": "Admin", "instructor": "Instructor"}.get(self.role, "")
 
     def get_full_name(self):
         """'Last, First M. Ext' style used across the UI."""

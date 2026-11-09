@@ -178,8 +178,8 @@ env\Scripts\python.exe manage.py create_admin --username admin
 The first command prints a list of lines ending with `OK`. The second asks you to **type a password twice** (at least 8
 characters). Write it down.
 
-This first account is a **superuser**: it can use the admin panel **and** the Django admin. Staff accounts (admin panel only)
-are added later by a superuser in the admin panel, under **Staff accounts**.
+This first account is a **superuser**: it can use the admin panel **and** the Django admin. Admin accounts (portal admins: admin panel only)
+are added later by a superuser in the admin panel, under **Admin accounts**.
 
 ---
 

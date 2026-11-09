@@ -77,7 +77,7 @@ def login_view(request):
 
         record_attempt(username, who, True)  # credentials were right
         if user.is_admin:
-            ctx["error"] = "Administrators sign in through the staff login page, not the Wi-Fi portal."
+            ctx["error"] = "Admins sign in through the admin login page, not the Wi-Fi portal."
             ctx["error_code"] = "not_instructor"
             audit(request, "login.denied", username, {"portal": "instructor", "reason": "admin_account"}, actor=user)
             return render(request, "portal/login.html", ctx)

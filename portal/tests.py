@@ -146,7 +146,7 @@ class CaptivePortalLoginTests(BaseTestCase):
 
     def test_admin_accounts_are_refused_at_the_portal(self):
         self.make_admin()
-        self.assertContains(self.post(username="boss"), "Administrators sign in")
+        self.assertContains(self.post(username="boss"), "Admins sign in through the admin login page")
 
     def test_router_down_shows_friendly_message(self):
         self.router.set_offline(True)

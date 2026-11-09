@@ -97,10 +97,10 @@ class InstructorForm(BootstrapMixin, forms.Form):
 
 
 class AdminAccountForm(BootstrapMixin, forms.ModelForm):
-    """A person who signs in to /admin-panel/: STAFF (panel only) or SUPERUSER (panel + Django admin)."""
+    """A person who signs in to /admin-panel/: Admin (role STAFF, panel only) or SUPERUSER (panel + Django admin)."""
 
     ROLE_CHOICES = [
-        (User.STAFF, "Staff - manages the portal only (no Django admin)"),
+        (User.STAFF, "Admin (portal admin) - manages the portal only (no Django admin)"),
         (User.SUPERUSER, "Superuser - the portal and the Django admin"),
     ]
     role = forms.ChoiceField(choices=ROLE_CHOICES, initial=User.STAFF)

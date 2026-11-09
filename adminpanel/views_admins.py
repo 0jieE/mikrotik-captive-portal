@@ -49,7 +49,7 @@ def admin_add(request):
         audit(request, "admin.created", user.username, {"role": user.role})
         messages.success(request, f"{user.role_label} account {user.username} added.")
         return redirect("adminpanel:admin_list")
-    return render(request, "adminpanel/admins/form.html", {"form": form, "title": "Add staff or superuser"})
+    return render(request, "adminpanel/admins/form.html", {"form": form, "title": "Add admin or superuser"})
 
 
 @superuser_required

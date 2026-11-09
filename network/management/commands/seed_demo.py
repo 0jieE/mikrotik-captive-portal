@@ -92,7 +92,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Demo data ready."))
         self.stdout.write("  Superuser:    admin / (SEED_ADMIN_PASSWORD from .env)   - admin panel + Django admin")
-        self.stdout.write(f"  Staff:        staff / {STAFF_PASSWORD}   - admin panel only")
+        self.stdout.write(f"  Admin:        staff / {STAFF_PASSWORD}   - admin panel only (portal admin)")
         self.stdout.write("  Test instructor: test / test123")
         self.stdout.write(f"  Sample instructors: INS-0001 .. INS-0010 / {SAMPLE_PASSWORD}")
         self.stdout.write(f"  Pending registration (needs approval): {PENDING_SAMPLE[0]} / {SAMPLE_PASSWORD}")

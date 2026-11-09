@@ -8,7 +8,7 @@ from accounts.models import User
 class Command(BaseCommand):
     help = (
         "Create (or reset) a portal account that can sign in to /admin-panel/. By default it is a SUPERUSER "
-        "(admin panel + Django admin); use --staff for a staff account (admin panel only). "
+        "(admin panel + Django admin); use --staff for an admin (portal admin) account (admin panel only). "
         "Use this instead of `createsuperuser` - it sets the portal's flags."
     )
 
@@ -19,7 +19,7 @@ class Command(BaseCommand):
         parser.add_argument("--last-name", default="")
         parser.add_argument(
             "--staff", "--no-superuser", dest="staff", action="store_true",
-            help="Create a STAFF account: admin panel only, no Django /django-admin/ access",
+            help="Create an Admin (portal admin) account: admin panel only, no Django /django-admin/ access",
         )
 
     def handle(self, *args, **opts):
@@ -47,5 +47,5 @@ class Command(BaseCommand):
         user.save()
         self.stdout.write(self.style.SUCCESS(
             f"{user.role_label} '{username}' {'created' if created else 'updated'}."
-            + ("" if user.is_superuser else " (staff: no access to Django admin)")
+            + ("" if user.is_superuser else " (portal admin: no access to Django admin)")
         ))

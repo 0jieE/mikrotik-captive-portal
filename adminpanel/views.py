@@ -295,5 +295,5 @@ def audit_logs(request):
 
 @admin_required
 def help_page(request):
-    """User manual for staff and superusers."""
+    """User manual for admins and superusers."""
     return render(request, "adminpanel/help.html")

@@ -8,7 +8,7 @@
     {% include 'partials/_messages.html' %}
     {% if error %}
     <div class="alert alert-{% if error_code == 'quota' %}warning{% else %}danger{% endif %} py-2" role="alert">{{ error }}
-      {% if error_code == 'not_instructor' %}<br><a class="alert-link" href="{% url 'accounts:staff_login' %}">Go to the staff login &rarr;</a>{% endif %}</div>
+      {% if error_code == 'not_instructor' %}<br><a class="alert-link" href="{% url 'accounts:staff_login' %}">Go to the admin login &rarr;</a>{% endif %}</div>
     {% endif %}
     <form method="post" action="{% url 'portal:login' %}" novalidate>
       {% csrf_token %}
@@ -31,5 +31,5 @@
     <p class="text-center small mt-2 mb-0"><a href="{% url 'portal:help' %}"><i class="bi bi-question-circle me-1"></i>How it works</a></p>
   </div>
 </div>
-<p class="text-center mt-3"><a class="portal-pill" href="{% url 'accounts:staff_login' %}"><i class="bi bi-shield-lock me-1"></i>Staff login</a></p>
+<p class="text-center mt-3"><a class="portal-pill" href="{% url 'accounts:staff_login' %}"><i class="bi bi-shield-lock me-1"></i>Admin login</a></p>
 {% endblock %}

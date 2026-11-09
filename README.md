@@ -120,13 +120,13 @@ Phone ─► open SSID ─► router redirects to hotspot login.html
 
 ### Who can do what (roles)
 
-| Role | Wi-Fi portal | Admin panel (instructors, policies, semesters, monitoring, reports, logs) | Staff accounts page | Django admin (`/django-admin/`) |
+| Role | Wi-Fi portal | Admin panel (instructors, policies, semesters, monitoring, reports, logs) | Admin accounts page | Django admin (`/django-admin/`) |
 |---|---|---|---|---|
 | **Instructor** | yes | no | no | no |
-| **Staff** | no | **yes** | no | no |
-| **Superuser** | no | **yes** | **yes** (adds/edits staff and superusers) | **yes** |
+| **Admin** (portal admin) | no | **yes** | no | no |
+| **Superuser** | no | **yes** | **yes** (adds/edits admins and superusers) | **yes** |
 
-The first account made with `manage.py create_admin` is a superuser. Superusers add staff (or more superusers) under **Staff accounts**.
+The first account made with `manage.py create_admin` is a superuser. Superusers add admins (or more superusers) under **Admin accounts**.
 The system never lets you remove your own superuser role, or deactivate or demote the last active superuser.
 
 ### Admin panel map
@@ -135,7 +135,7 @@ The system never lets you remove your own superuser role, or deactivate or demot
 |---|---|
 | Dashboard (live cards, 7-day chart, recent logs) | `/admin-panel/` |
 | Instructors — list/filters/bulk, add/edit/view, reset password, policy, masterlist import | `/admin-panel/instructors/` |
-| Staff accounts (superusers only; you cannot deactivate yourself or the last superuser) | `/admin-panel/admins/` |
+| Admin accounts (superusers only; you cannot deactivate yourself or the last superuser) | `/admin-panel/admins/` |
 | School years & semesters ("Set active" confirmation modal) | `/admin-panel/semesters/` |
 | Bandwidth policies + "Sync to router" status | `/admin-panel/policies/` |
 | Live monitoring (HTMX every 5 s, Kick) | `/admin-panel/monitoring/` |
@@ -178,7 +178,7 @@ mock router, captive-portal login (reasons, rate limiting, RBAC), admin actions,
 ## 6. Security notes
 
 * RBAC via `admin_required` / `instructor_required`; instructors cannot reach admin pages or other instructors' data.
-* CSRF on every form; login rate limit: 5 failures per (username, IP) → 5-minute lockout (staff and portal logins).
+* CSRF on every form; login rate limit: 5 failures per (username, IP) → 5-minute lockout (admin and Wi-Fi portal logins).
 * Every admin action and every login success/failure/denial is written to the audit log.
 * Router credentials only in `.env` (git-ignored). `.env.example` is committed.
 * The captive portal runs over plain HTTP on the LAN (the router redirect is HTTP too). Do not reuse an instructor's
