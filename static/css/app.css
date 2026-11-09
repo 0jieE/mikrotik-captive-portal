@@ -272,3 +272,11 @@ html.no-anim .app-sidebar, html.no-anim .app-main, html.no-anim .sb-backdrop { t
 .manual-url { display: inline-block; background: var(--brand-50); color: var(--brand-ink); border-radius: 10px; padding: .4rem .8rem; font-size: 1rem; word-break: break-all; }
 .manual-table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
 .manual-table td:first-child { font-weight: 600; }
+
+/* ---- show/hide password button (static/js/password-toggle.js) ---- */
+.pw-wrap { position: relative; }
+.pw-wrap > input { padding-right: 3rem; }
+.pw-toggle { position: absolute; top: 50%; right: .35rem; transform: translateY(-50%); display: flex; align-items: center; justify-content: center;
+  width: 2.4rem; height: 2.4rem; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer; }
+.pw-toggle:hover { color: var(--brand-ink); background: var(--brand-50); }
+.pw-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }

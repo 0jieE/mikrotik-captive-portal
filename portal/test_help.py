@@ -32,3 +32,20 @@ class UserManualTests(BaseTestCase):
             self.assertContains(r, "Start of a semester")
             self.assertContains(r, "User manual")
             self.client.logout()
+
+
+class PasswordToggleTests(BaseTestCase):
+    """Every page with a password box loads the show/hide password script."""
+
+    def test_script_is_on_every_login_and_password_page(self):
+        script = "js/password-toggle.js"
+        self.assertContains(self.client.get(reverse("portal:login")), script)
+        self.assertContains(self.client.get(reverse("accounts:staff_login")), script)
+        self.assertContains(self.client.get(reverse("portal:signup")), script)
+        self.basic_setup()
+        self.client.login(username="s1", password=PASSWORD)
+        self.assertContains(self.client.get(reverse("accounts:change_password")), script)
+        self.client.logout()
+        self.make_admin()
+        self.client.login(username="boss", password=PASSWORD)
+        self.assertContains(self.client.get(reverse("accounts:change_password")), script)
