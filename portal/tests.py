@@ -268,3 +268,48 @@ class UsernameLabelTests(BaseTestCase):
         self.assertContains(r, "Username")
         self.assertContains(r, "Use your username and password.")
         self.assertNotContains(r, "ID number")
+
+
+class AlreadyConnectedSignInTests(BaseTestCase):
+    """After the captive sign-in window closes, the instructor reopens the portal in a normal browser: the router
+    no longer redirects (the phone is online), so the form has no ?mac=&ip= and may come from the router's address."""
+
+    def setUp(self):
+        super().setUp()
+        self.basic_setup()
+        self.url = reverse("portal:login")
+        self.client.post(self.url, {"username": "s1", "password": PASSWORD, "mac": MAC, "ip": IP})
+        self.client.logout()  # the captive mini-browser's cookie is gone
+
+    def test_second_sign_in_without_device_details_goes_to_dashboard_without_kicking(self):
+        with get_router() as router:
+            before = [a["id"] for a in router.active_sessions()]
+        from unittest import mock
+
+        # behave like the real router: 192.168.88.1 is not in its host table, so the device cannot be identified
+        with mock.patch("network.mikrotik.MockMikroTik.is_mock", False):
+            r = self.client.post(self.url, {"username": "s1", "password": PASSWORD}, REMOTE_ADDR="192.168.88.1")
+        self.assertRedirects(r, reverse("portal:dashboard"), fetch_redirect_response=False)
+        with get_router() as router:
+            self.assertEqual([a["id"] for a in router.active_sessions()], before)  # same session, not re-logged
+        self.assertEqual(Session.objects.filter(is_active=True).count(), 1)
+        self.assertContains(self.client.get(reverse("portal:dashboard")), "already connected")
+
+    def test_second_sign_in_from_the_same_device_is_also_fine(self):
+        r = self.client.post(self.url, {"username": "s1", "password": PASSWORD, "mac": MAC, "ip": IP})
+        self.assertRedirects(r, reverse("portal:dashboard"))
+        self.assertEqual(Session.objects.filter(is_active=True).count(), 1)
+
+    def test_wrong_password_is_still_refused(self):
+        r = self.client.post(self.url, {"username": "s1", "password": "nope"}, REMOTE_ADDR="192.168.88.1")
+        self.assertContains(r, "Wrong username or password")
+
+    def test_undetectable_device_with_right_password_still_reaches_the_dashboard(self):
+        from unittest import mock
+
+        from network.services import ConnectResult
+
+        fail = ConnectResult(False, "Could not detect your device. Reconnect to the Wi-Fi and try again.", "no_mac")
+        with mock.patch("portal.views.connect_instructor", return_value=fail):
+            r = self.client.post(self.url, {"username": "s1", "password": PASSWORD})
+        self.assertRedirects(r, reverse("portal:dashboard"), fetch_redirect_response=False)

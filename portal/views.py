@@ -28,7 +28,8 @@ PROBE_HOSTS = (
 )
 # Denials where the credentials are right but internet is not allowed: let the instructor see the dashboard
 # (usage, quota, plan, history) instead of a dead-end login error.
-DASHBOARD_CODES = {"quota", "no_semester", "no_account", "account_disabled", "pending_approval"}
+# no_mac/no_ip too: the password was right, so show the dashboard (with the warning) rather than a dead end.
+DASHBOARD_CODES = {"quota", "no_semester", "no_account", "account_disabled", "pending_approval", "no_mac", "no_ip"}
 
 
 def _safe_dst(dst: str) -> str:
@@ -93,6 +94,10 @@ def login_view(request):
             return render(request, "portal/login.html", ctx)
 
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        if result.code == "already":
+            audit(request, "login.success", username, {"portal": "instructor", "already_connected": True}, actor=user)
+            messages.info(request, result.message)
+            return redirect("accounts:change_password" if user.must_change_password else "portal:dashboard")
         audit(request, "login.success", username, {"portal": "instructor", "ip": ip, "mac": result.session.mac_address}, actor=user)
         if user.must_change_password:
             messages.info(request, "You are connected. Please set a new password now.")
@@ -164,7 +169,9 @@ def dashboard_live(request):
 def connect(request):
     """'Connect this device' from the dashboard (the instructor is already signed in to the portal)."""
     result = connect_instructor(request.user, "", "", peer_ip=client_ip(request))
-    if result.success:
+    if result.code == "already":
+        messages.info(request, result.message)
+    elif result.success:
         audit(request, "login.success", request.user.username, {"portal": "instructor", "via": "dashboard"})
         messages.success(request, "Connected. You can now use the internet.")
     else:

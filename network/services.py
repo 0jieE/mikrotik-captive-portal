@@ -262,9 +262,20 @@ def connect_instructor(user, mac: str, ip: str, peer_ip: str | None = None) -> C
     try:
         with get_router() as r:
             mac, ip = resolve_device(r, mac, ip, peer_ip)
+            actives = r.active_sessions()
+            # Already online (e.g. the captive sign-in window closed and the portal was opened again in a browser,
+            # which comes without ?mac=&ip= and sometimes from the router's own address): do not kick and re-login,
+            # just let them through to the dashboard.
+            mine = [a for a in actives if a["user"] == username]
+            if mine and (not MAC_RE.match(mac) or any(a["mac"] == mac for a in mine)):
+                already = next((a for a in mine if a["mac"] == mac), mine[0])
+                session = (
+                    Session.objects.filter(instructor__user=user, is_active=True, mac_address__iexact=already["mac"]).first()
+                    or Session.objects.filter(instructor__user=user, is_active=True).order_by("-login_time").first()
+                )  # None is fine: sync_sessions adopts router sessions Django does not know about yet
+                return ConnectResult(True, "You are already connected to the Wi-Fi.", "already", session)
             if not MAC_RE.match(mac):
                 return ConnectResult(False, "Could not detect your device. Reconnect to the Wi-Fi and try again.", "no_mac")
-            actives = r.active_sessions()
             # Same instructor on another device, or this device still logged in as someone else: drop them first.
             stale = [a for a in actives if a["user"] == username or a["mac"] == mac]
             if stale:
