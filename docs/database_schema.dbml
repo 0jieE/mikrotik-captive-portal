@@ -5,7 +5,7 @@
 // this whole file into the editor on the left). The diagram appears on the right.
 // Export as PNG/PDF from the "Export" menu.
 //
-// Generated from the real Django models + the live PostgreSQL database (2026-10-09).
+// Generated from the real Django models + the live PostgreSQL database (2026-10-09, checked 2026-11-09).
 // Source of truth: accounts/models.py, academics/models.py, instructors/models.py, network/models.py
 //
 // Not drawn (framework tables that Django creates itself): auth_group, auth_permission,
@@ -64,22 +64,25 @@ Table user [headercolor: #17603a] {
   id                   bigint       [pk, increment]
   password             varchar(128) [not null, note: 'Django-hashed (PBKDF2)']
   last_login           timestamptz  [null]
-  is_superuser         boolean      [not null, default: false, note: 'may open /django-admin/']
+  is_superuser         boolean      [not null, default: false, note: 'superuser role: admin panel + /django-admin/ + manages staff accounts']
   username             varchar(150) [not null, unique, note: 'what an instructor signs in to the Wi-Fi portal with']
   first_name           varchar(150) [not null, default: '']
   last_name            varchar(150) [not null, default: '']
   middle_name          varchar(100) [not null, default: '']
   extension_name       varchar(20)  [not null, default: '', note: 'Jr., III ...']
-  is_staff             boolean      [not null, default: false]
+  is_staff             boolean      [not null, default: false, note: 'Django flag; kept equal to is_superuser (staff role does not get it)']
   is_active            boolean      [not null, default: true, note: 'false = account disabled']
-  is_admin             boolean      [not null, default: false, note: 'may use /admin-panel/']
+  is_admin             boolean      [not null, default: false, note: 'may use /admin-panel/ (staff and superusers)']
   is_instructor        boolean      [not null, default: false, note: 'may use the Wi-Fi portal']
   must_change_password boolean      [not null, default: false, note: 'set after a temporary password is issued']
   date_joined          timestamptz  [not null, default: `now()`]
   created_at           timestamptz  [not null, default: `now()`]
   updated_at           timestamptz  [not null, default: `now()`]
 
-  Note: 'Administrators and instructors share this table. No e-mail address is stored.'
+  Note: '''
+    Staff, superusers and instructors share this table. No e-mail address is stored.
+    Roles: instructor = is_instructor; staff = is_admin; superuser = is_admin + is_superuser + is_staff.
+  '''
 }
 
 Table audit_log [headercolor: #17603a] {
