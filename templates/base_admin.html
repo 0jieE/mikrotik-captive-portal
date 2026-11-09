@@ -36,6 +36,9 @@
     <div class="sb-heading">Insights</div>
     <a class="sb-link {% if 'report' in ns %}active{% endif %}" href="{% url 'adminpanel:reports' %}" title="Reports"><i class="bi bi-bar-chart-line"></i><span>Reports</span></a>
     <a class="sb-link {% if ns == 'audit_logs' %}active{% endif %}" href="{% url 'adminpanel:audit_logs' %}" title="System logs"><i class="bi bi-journal-text"></i><span>System logs</span></a>
+
+    <div class="sb-heading">Help</div>
+    <a class="sb-link {% if ns == 'help' %}active{% endif %}" href="{% url 'adminpanel:help' %}" title="User manual"><i class="bi bi-question-circle"></i><span>User manual</span></a>
   </nav>
 </aside>
 {% endwith %}

@@ -19,7 +19,7 @@
       {% endfor %}
       <button class="btn btn-primary btn-lg w-100 mt-2" type="submit"><i class="bi bi-person-plus me-2"></i>Register</button>
     </form>
-    <p class="text-center small text-muted mt-3 mb-0">Already registered? <a href="{% url 'portal:login' %}">Sign in</a></p>
+    <p class="text-center small text-muted mt-3 mb-0">Already registered? <a href="{% url 'portal:login' %}">Sign in</a> &middot; <a href="{% url 'portal:help' %}">How it works</a></p>
   </div>
 </div>
 {% endblock %}

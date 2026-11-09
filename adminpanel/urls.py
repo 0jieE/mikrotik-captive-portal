@@ -56,4 +56,5 @@ urlpatterns = [
     path("reports/export.csv", views.report_csv, name="report_csv"),
     path("reports/export.pdf", views.report_pdf, name="report_pdf"),
     path("logs/", views.audit_logs, name="audit_logs"),
+    path("help/", views.help_page, name="help"),
 ]

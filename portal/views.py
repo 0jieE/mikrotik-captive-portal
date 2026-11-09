@@ -133,6 +133,11 @@ def signup_done(request):
     return render(request, "portal/signup_done.html")
 
 
+def help_page(request):
+    """User manual for instructors. Public, so it can be read before signing in."""
+    return render(request, "portal/help.html")
+
+
 def _dashboard_context(user):
     instructor = user.instructor
     account = instructor.current_account

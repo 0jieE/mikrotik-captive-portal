@@ -19,6 +19,7 @@
       <a class="tab-link {% if ns == 'dashboard' %}active{% endif %}" href="{% url 'portal:dashboard' %}"><i class="bi bi-house-door me-1"></i>Home</a>
       <a class="tab-link {% if ns == 'history' %}active{% endif %}" href="{% url 'portal:history' %}"><i class="bi bi-clock-history me-1"></i>History</a>
       <a class="tab-link {% if ns == 'change_password' %}active{% endif %}" href="{% url 'accounts:change_password' %}"><i class="bi bi-key me-1"></i>Password</a>
+      <a class="tab-link" href="{% url 'portal:help' %}"><i class="bi bi-question-circle me-1"></i>Help</a>
       <form method="post" action="{% url 'portal:logout' %}" class="ms-1">{% csrf_token %}<button class="btn btn-sm btn-light"><i class="bi bi-box-arrow-right me-1"></i>Log out</button></form>
     </nav>
   </div>
@@ -33,6 +34,7 @@
   <a class="{% if ns == 'dashboard' %}active{% endif %}" href="{% url 'portal:dashboard' %}"><i class="bi bi-house-door"></i>Home</a>
   <a class="{% if ns == 'history' %}active{% endif %}" href="{% url 'portal:history' %}"><i class="bi bi-clock-history"></i>History</a>
   <a class="{% if ns == 'change_password' %}active{% endif %}" href="{% url 'accounts:change_password' %}"><i class="bi bi-key"></i>Password</a>
+  <a href="{% url 'portal:help' %}"><i class="bi bi-question-circle"></i>Help</a>
 </nav>
 {% endwith %}
 <script src="{% static 'vendor/jquery.min.js' %}"></script>

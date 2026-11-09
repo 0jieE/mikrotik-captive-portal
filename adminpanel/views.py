@@ -291,3 +291,9 @@ def audit_logs(request):
             "capped": qs.count() > 2000,
         },
     )
+
+
+@admin_required
+def help_page(request):
+    """User manual for staff and superusers."""
+    return render(request, "adminpanel/help.html")

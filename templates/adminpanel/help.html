@@ -1,0 +1,168 @@
+{% extends 'base_admin.html' %}
+{% block title %}User manual{% endblock %}
+{% block content %}
+<div class="page-head d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 page-title mb-0">User manual</h1>
+    <p class="text-muted mb-0">How the CDK Wi-Fi system works, and how to run it day to day.</p>
+  </div>
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:help' %}" target="_blank" rel="noopener"><i class="bi bi-phone me-1"></i>Instructor guide</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-3 d-none d-lg-block">
+    <nav class="card manual-side" aria-label="Contents"><div class="card-body small">
+      <div class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.72rem">Contents</div>
+      <a href="#how">How it works</a>
+      <a href="#roles">Roles</a>
+      <a href="#start">Start of a semester</a>
+      <a href="#instructors">Instructors</a>
+      <a href="#daily">Daily work</a>
+      <a href="#switch">Changing semesters</a>
+      <a href="#staff">Staff accounts</a>
+      <a href="#trouble">Problems &amp; fixes</a>
+    </div></nav>
+  </div>
+
+  <div class="col-lg-9">
+    <div class="card mb-3" id="how"><div class="card-body manual-section">
+      <h3><i class="bi bi-diagram-3"></i>How it works</h3>
+      <p>Three parts work together:</p>
+      <dl class="manual-dl">
+        <dt>The portal (this app)</dt>
+        <dd>Holds the instructors, semesters, plans and usage. It decides <strong>who</strong> may go online. This is
+          where you make every change.</dd>
+        <dt>The MikroTik router</dt>
+        <dd>Runs the Wi-Fi hotspot. It blocks the internet for every device until the portal tells it to let one in, and
+          it enforces the speed limit and data allowance.</dd>
+        <dt>The background sync</dt>
+        <dd>Every 30 seconds it reads usage from the router, records it in the portal, closes sessions that ended, and
+          disconnects anyone whose allowance is used up or whose access was removed.</dd>
+      </dl>
+      <p class="fw-semibold mb-2">What happens when an instructor signs in</p>
+      <ol class="manual-flow">
+        <li><i class="bi bi-wifi"></i><span>The phone joins the Wi-Fi; the router sends it to the portal sign-in page.</span></li>
+        <li><i class="bi bi-person-check"></i><span>The portal checks the password, approval, active semester, account and data left.</span></li>
+        <li><i class="bi bi-router"></i><span>It updates the instructor's hotspot user on the router and logs that device in.</span></li>
+        <li><i class="bi bi-journal-check"></i><span>A session is recorded and shows in <a href="{% url 'adminpanel:monitoring' %}">Live monitoring</a>.</span></li>
+      </ol>
+      <ul class="mb-0">
+        <li>Instructors only ever type their portal username and password. The router passwords are random and never shown.</li>
+        <li>One device per instructor: a new sign-in moves the connection to the new device.</li>
+        <li>If the instructor is already online and opens the portal again, they go straight to their dashboard.</li>
+      </ul>
+    </div></div>
+
+    <div class="card mb-3" id="roles"><div class="card-body manual-section">
+      <h3><i class="bi bi-people"></i>Roles</h3>
+      <div class="table-responsive">
+        <table class="table table-sm manual-table mb-0">
+          <thead><tr><th>Role</th><th>Signs in at</th><th>Can do</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Instructor</strong></td><td>Wi-Fi sign-in page</td><td>Go online, see own dashboard and history, change own password.</td></tr>
+            <tr><td><strong>Staff</strong></td><td>Staff login</td><td>Everything in this admin panel: instructors, semesters, plans, monitoring, reports, logs.</td></tr>
+            <tr><td><strong>Superuser</strong></td><td>Staff login</td><td>Everything staff can, plus <strong>Staff accounts</strong> and the Django admin.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+
+    <div class="card mb-3" id="start"><div class="card-body manual-section">
+      <h3><i class="bi bi-calendar-check"></i>Start of a semester (do these in order)</h3>
+      <ol class="mb-0">
+        <li><strong>Bandwidth policies</strong> - <a href="{% url 'adminpanel:policy_list' %}">Bandwidth policies</a>. Each
+          plan has download/upload speed, an optional data quota for the semester, and an optional session time limit.
+          Mark one as <em>default</em> - it is used when you approve someone without choosing a plan. Saving a plan sends it
+          to the router.</li>
+        <li><strong>Semester</strong> - <a href="{% url 'adminpanel:semester_list' %}">Semesters</a>. Add the school year
+          and the semester, then <strong>Activate</strong> it. Only one semester is active at a time, and the internet is
+          closed when none is.</li>
+        <li><strong>Give instructors an account for this semester</strong> - see the next section.</li>
+      </ol>
+    </div></div>
+
+    <div class="card mb-3" id="instructors"><div class="card-body manual-section">
+      <h3><i class="bi bi-mortarboard"></i>Instructors</h3>
+      <p>An instructor can go online only when <strong>all</strong> of these are true: the user is active, the
+        registration is approved, a semester is active, they have an account (with a plan) for that semester, the
+        account is enabled, and the data quota is not used up.</p>
+      <dl class="manual-dl mb-0">
+        <dt>They register themselves</dt>
+        <dd>New sign-ups appear with a badge on <a href="{% url 'adminpanel:instructor_list' %}">Instructors</a>. Click
+          <strong>Approve</strong> (default plan) or open the instructor to choose a plan. Approving also creates their account
+          for the active semester. <strong>Reject</strong> blocks the registration.</dd>
+        <dt>You add one</dt>
+        <dd><strong>Add instructor</strong> on the Instructors page. A temporary password is shown once; the instructor must
+          change it at first sign-in.</dd>
+        <dt>You import a list</dt>
+        <dd><strong>Upload masterlist</strong>: download the template (username, first, middle, last name, extension),
+          fill it in, upload, check the preview, confirm. Print the credentials sheet with the temporary passwords - it is
+          shown only once.</dd>
+        <dt>Bulk actions</dt>
+        <dd>Tick instructors, then <em>Bulk action</em>: approve, reject, enable, disable, or <strong>change bandwidth
+          policy</strong>. Changing the policy also creates the account for the active semester if it is missing.</dd>
+        <dt>One instructor's page</dt>
+        <dd>See usage and sessions, change the plan, enable/disable, <strong>reset password</strong> (temporary password
+          shown once), or <strong>push to router</strong> to resend their settings.</dd>
+      </dl>
+    </div></div>
+
+    <div class="card mb-3" id="daily"><div class="card-body manual-section">
+      <h3><i class="bi bi-activity"></i>Daily work</h3>
+      <dl class="manual-dl mb-0">
+        <dt><a href="{% url 'adminpanel:dashboard' %}">Dashboard</a></dt>
+        <dd>Number of instructors, who is online, active accounts, router status, data used over the last 7 days, and
+          recent activity.</dd>
+        <dt><a href="{% url 'adminpanel:monitoring' %}">Live monitoring</a></dt>
+        <dd>Every connected device with its address, time online and data. <strong>Kick</strong> disconnects a device; the
+          instructor can sign in again if still allowed (disable the account to keep them off).</dd>
+        <dt><a href="{% url 'adminpanel:reports' %}">Reports</a></dt>
+        <dd>Usage by day and by instructor for a date range. Export to CSV or PDF.</dd>
+        <dt><a href="{% url 'adminpanel:audit_logs' %}">System logs</a></dt>
+        <dd>Every sign-in (successful or refused, with the reason), approval, change and kick, with who did it and when.
+          Look here first when an instructor reports a problem.</dd>
+      </dl>
+    </div></div>
+
+    <div class="card mb-3" id="switch"><div class="card-body manual-section">
+      <h3><i class="bi bi-arrow-repeat"></i>Changing to a new semester</h3>
+      <p>Activating a new semester <strong>closes the old one</strong>: every account of the old semester is turned off on
+        the router and everyone online is disconnected. The confirmation page shows how many will be affected.</p>
+      <p class="mb-0">Accounts do not carry over. After activating, open <em>Instructors</em>, select everyone who should
+        keep access, and use <em>Bulk action &rarr; Change bandwidth policy</em> to give them an account in the new
+        semester. Usage starts again from zero.</p>
+    </div></div>
+
+    <div class="card mb-3" id="staff"><div class="card-body manual-section">
+      <h3><i class="bi bi-shield-lock"></i>Staff accounts (superusers only)</h3>
+      <ul class="mb-0">
+        <li>Add people who run the portal and choose <strong>Staff</strong> or <strong>Superuser</strong>.</li>
+        <li>You cannot deactivate yourself, the last active account, or the last active superuser, and you cannot remove
+          your own superuser role.</li>
+        <li>Everyone changes their own password from the menu at the top right.</li>
+      </ul>
+    </div></div>
+
+    <div class="card mb-3" id="trouble"><div class="card-body manual-section">
+      <h3><i class="bi bi-tools"></i>Problems and fixes</h3>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle manual-table mb-0">
+          <thead><tr><th>Instructor says</th><th>Check / fix</th></tr></thead>
+          <tbody>
+            <tr><td>"Wrong username or password"</td><td>Find them on <em>Instructors</em> (search the username). Reset the password if needed.</td></tr>
+            <tr><td>"Waiting for approval"</td><td>Approve them on <em>Instructors</em>.</td></tr>
+            <tr><td>"No internet account for the current semester"</td><td>Open the instructor and assign a plan (creates the account).</td></tr>
+            <tr><td>"No active semester"</td><td>Activate a semester on <em>Semesters</em>.</td></tr>
+            <tr><td>"Data quota is used up"</td><td>Move them to a plan with a bigger quota, or one without a quota.</td></tr>
+            <tr><td>"Account disabled"</td><td>Enable the account on the instructor's page.</td></tr>
+            <tr><td>"Could not detect your device"</td><td>Ask them to turn Wi-Fi off and on and sign in from the page that opens by itself.</td></tr>
+            <tr><td>"Network controller is not responding"</td><td>The portal cannot reach the router. Check the router is on and connected, then look at the dashboard's router status.</td></tr>
+            <tr><td>"Too many failed attempts"</td><td>They must wait 5 minutes (5 wrong passwords in a row).</td></tr>
+            <tr><td>Online, but the speed or limit looks wrong</td><td>On <em>Bandwidth policies</em> use <strong>Sync</strong>, or <strong>Push to router</strong> on the instructor's page.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

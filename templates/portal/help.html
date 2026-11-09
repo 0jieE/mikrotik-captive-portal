@@ -1,0 +1,143 @@
+{% extends 'base_public.html' %}
+{% block title %}How it works - CDK Wi-Fi{% endblock %}
+{% block tagline %}User manual for instructors{% endblock %}
+{% block content %}
+{% with portal_url=request.scheme|add:"://"|add:request.get_host|add:"/portal/" %}
+<div class="card manual-card shadow">
+  <div class="card-body p-4 p-md-5">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
+      <div>
+        <h2 class="h4 mb-1 page-title">How the instructor Wi-Fi works</h2>
+        <p class="text-muted mb-0">Everything you need to get online, check your data, and fix common problems.</p>
+      </div>
+      {% if request.user.is_authenticated and request.user.is_instructor %}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:dashboard' %}"><i class="bi bi-arrow-left me-1"></i>My Wi-Fi</a>
+      {% else %}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:login' %}"><i class="bi bi-arrow-left me-1"></i>Sign in</a>
+      {% endif %}
+    </div>
+
+    <nav class="manual-toc mb-4" aria-label="Contents">
+      <a href="#overview">The idea</a>
+      <a href="#register">1. Register</a>
+      <a href="#signin">2. Sign in</a>
+      <a href="#dashboard">3. Your dashboard</a>
+      <a href="#rules">Data, speed &amp; devices</a>
+      <a href="#password">Password</a>
+      <a href="#messages">Messages explained</a>
+    </nav>
+
+    <section id="overview" class="manual-section">
+      <h3><i class="bi bi-lightbulb"></i>The idea in one minute</h3>
+      <p>The school Wi-Fi is open to join, but the internet stays <strong>locked</strong> until you sign in with your
+        own username and password on this portal.</p>
+      <ol class="manual-flow">
+        <li><i class="bi bi-wifi"></i><span>You join the Wi-Fi.</span></li>
+        <li><i class="bi bi-box-arrow-in-right"></i><span>The sign-in page opens. You type your username and password.</span></li>
+        <li><i class="bi bi-shield-check"></i><span>The portal checks your account, your semester and your data left.</span></li>
+        <li><i class="bi bi-router"></i><span>It tells the Wi-Fi router to let <em>your device</em> online, at your plan's speed.</span></li>
+      </ol>
+      <p class="mb-0">You sign in <strong>only once</strong>. You never type anything into the router itself - the
+        portal does that for you.</p>
+    </section>
+
+    <section id="register" class="manual-section">
+      <h3><i class="bi bi-person-plus"></i>1. Create your account (first time only)</h3>
+      <ol>
+        <li>Connect to the school Wi-Fi. When the sign-in page appears, tap <strong>Create an account</strong>.</li>
+        <li>Fill in your name, choose a <strong>username</strong> (no spaces) and a password, then tap <strong>Register</strong>.</li>
+        <li>Wait for the <strong>ICT office to approve</strong> your registration. Until then, signing in will say
+          <em>"waiting for approval"</em>.</li>
+        <li>Once approved, sign in with the same username and password.</li>
+      </ol>
+      <p class="manual-note"><i class="bi bi-info-circle"></i><span>Your username is not case-sensitive when you sign in -
+        <span class="mono">JDelaCruz</span> and <span class="mono">jdelacruz</span> work the same.</span></p>
+    </section>
+
+    <section id="signin" class="manual-section">
+      <h3><i class="bi bi-wifi"></i>2. Sign in and get online</h3>
+      <ol>
+        <li>Join the school Wi-Fi. A sign-in window opens by itself. If it does not, open a browser and go to any
+          website - you will be sent to the sign-in page.</li>
+        <li>Type your username and password and tap <strong>Connect</strong>.</li>
+        <li>That's it - you are online.</li>
+      </ol>
+      <p class="manual-note"><i class="bi bi-info-circle"></i><span><strong>The sign-in window closes by itself.</strong>
+        As soon as your phone sees that the internet works, it closes that small window. This is normal - you are still
+        connected.</span></p>
+    </section>
+
+    <section id="dashboard" class="manual-section">
+      <h3><i class="bi bi-speedometer2"></i>3. Your dashboard (check your data any time)</h3>
+      <p>Open this address in your normal browser while on the school Wi-Fi:</p>
+      <p class="text-center"><span class="manual-url mono">{{ portal_url }}</span></p>
+      <p>Sign in with your username and password. Because the sign-in window was closed, the browser asks you
+        once more - this does <strong>not</strong> disconnect you; it shows <em>"You are already connected"</em> and opens
+        your dashboard. Bookmark the page or use <em>Add to Home screen</em>.</p>
+      <ul>
+        <li><strong>Home</strong> - connected or not, your device's address, how long you've been online, data used this
+          semester and your plan's speed.</li>
+        <li><strong>History</strong> - your past sessions: when, how long, how much data, and why each one ended.</li>
+        <li><strong>Password</strong> - change your password.</li>
+        <li><strong>Disconnect</strong> - takes your device off the internet but keeps you on the dashboard.</li>
+        <li><strong>Log out</strong> - signs you out <em>and</em> disconnects your device.</li>
+      </ul>
+    </section>
+
+    <section id="rules" class="manual-section">
+      <h3><i class="bi bi-sliders"></i>Data, speed and devices</h3>
+      <dl class="manual-dl">
+        <dt>Your plan</dt>
+        <dd>Every account has a plan set by the ICT office: download and upload speed, and usually a data allowance for
+          the semester. Your dashboard shows it.</dd>
+        <dt>Data allowance</dt>
+        <dd>Data used is counted for the whole semester. When it runs out you are disconnected and cannot get back
+          online until the ICT office changes your plan. You can still sign in to see your dashboard.</dd>
+        <dt>One device at a time</dt>
+        <dd>Your account works on one device at a time. Signing in on a second device disconnects the first one.</dd>
+        <dt>Time limits</dt>
+        <dd>Some plans end a session after a set time, and the router may disconnect a device that has been idle or has
+          left the Wi-Fi. Just sign in again.</dd>
+        <dt>Semesters</dt>
+        <dd>Internet access is open only while a semester is active, and your account belongs to that semester. At the
+          start of a new semester the ICT office opens your account again - if it says you have no account for this
+          semester, ask them.</dd>
+      </dl>
+    </section>
+
+    <section id="password" class="manual-section">
+      <h3><i class="bi bi-key"></i>Password</h3>
+      <ul>
+        <li>Change it under <strong>Password</strong> on your dashboard.</li>
+        <li><strong>Forgot it?</strong> Ask the ICT office. They give you a temporary password, and you must choose a new
+          one the first time you sign in with it.</li>
+        <li>After <strong>5 wrong tries</strong> the sign-in is locked for <strong>5 minutes</strong>. Wait, then try again.</li>
+        <li>Never share your password - everything done on your account counts against your data.</li>
+      </ul>
+    </section>
+
+    <section id="messages" class="manual-section mb-0">
+      <h3><i class="bi bi-chat-square-text"></i>What the messages mean</h3>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle manual-table mb-0">
+          <thead><tr><th>You see</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td>Wrong username or password.</td><td>Check the spelling, or ask the ICT office to reset your password.</td></tr>
+            <tr><td>Your registration is waiting for approval.</td><td>Wait for the ICT office to approve it.</td></tr>
+            <tr><td>Your registration was not approved.</td><td>Visit the ICT office.</td></tr>
+            <tr><td>You are already connected to the Wi-Fi.</td><td>Nothing - you are online. Your dashboard opens.</td></tr>
+            <tr><td>Your data quota for this semester is used up.</td><td>Ask the ICT office if you need more.</td></tr>
+            <tr><td>There is no active semester right now.</td><td>Internet is closed between semesters.</td></tr>
+            <tr><td>You have no internet account for the current semester.</td><td>Ask the ICT office to open your account.</td></tr>
+            <tr><td>Your account / internet account is disabled.</td><td>Visit the ICT office.</td></tr>
+            <tr><td>Could not detect your device.</td><td>Turn Wi-Fi off and on, wait for the sign-in page, and sign in from there.</td></tr>
+            <tr><td>The network controller is not responding.</td><td>Wait a minute and try again. If it continues, tell the ICT office.</td></tr>
+            <tr><td>Too many failed attempts.</td><td>Wait 5 minutes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
